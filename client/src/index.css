@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #0d0d1a;
+  color: #e2e8f0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  height: 100vh;
+}
+
+#root {
+  height: 100vh;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #4c1d95;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #7c3aed;
+}
+
+/* Range input base reset */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 4px;
+  background: #1e1e3a;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-top: -5px;
+  background: #a855f7;
+  transition: transform 0.1s;
+}
+
+input[type='range']:hover::-webkit-slider-thumb {
+  transform: scale(1.25);
+}
+
+input[type='range']::-moz-range-track {
+  height: 4px;
+  border-radius: 4px;
+  background: #1e1e3a;
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: #a855f7;
+}
+
+/* Lyric glow animation */
+@keyframes glowPulse {
+  0%, 100% {
+    text-shadow:
+      0 0 20px rgba(168, 85, 247, 0.9),
+      0 0 40px rgba(168, 85, 247, 0.5);
+  }
+  50% {
+    text-shadow:
+      0 0 28px rgba(192, 132, 252, 1),
+      0 0 56px rgba(168, 85, 247, 0.7),
+      0 0 90px rgba(99, 102, 241, 0.4);
+  }
+}
+
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-3px); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-glow {
+  animation: glowPulse 2.5s ease-in-out infinite;
+}
+
+.animate-bounce-icon {
+  animation: bounce 0.8s ease-in-out infinite alternate;
+}
+
+.drag-over {
+  border-color: #a855f7 !important;
+  background: rgba(168, 85, 247, 0.08) !important;
+}

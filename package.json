@@ -1,0 +1,23 @@
+{
+  "name": "karaoke",
+  "version": "1.0.0",
+  "description": "Web-based karaoke player — drop audio files in songs/, add .lrc files for lyrics",
+  "homepage": "https://github.com/yarinr28/Karaoke#readme",
+  "bugs": {
+    "url": "https://github.com/yarinr28/Karaoke/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yarinr28/Karaoke.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

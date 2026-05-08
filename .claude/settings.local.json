@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"C:\\\\Users\\\\Yarin Raziel\\\\Desktop\\\\general\\\\code\\\\Karaoke\\\\server\\\\src\\\\songs\\\\schemas\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Yarin Raziel\\\\Desktop\\\\general\\\\code\\\\Karaoke\\\\server\\\\src\\\\queue\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Yarin Raziel\\\\Desktop\\\\general\\\\code\\\\Karaoke\\\\server\\\\src\\\\upload\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Yarin Raziel\\\\Desktop\\\\general\\\\code\\\\Karaoke\\\\server\\\\src\\\\vocal\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Yarin Raziel\\\\Desktop\\\\general\\\\code\\\\Karaoke\\\\client\\\\src\\\\components\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Yarin Raziel\\\\Desktop\\\\general\\\\code\\\\Karaoke\\\\client\\\\src\\\\pages\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Yarin Raziel\\\\Desktop\\\\general\\\\code\\\\Karaoke\\\\client\\\\src\\\\hooks\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Yarin Raziel\\\\Desktop\\\\general\\\\code\\\\Karaoke\\\\client\\\\src\\\\services\")",
+      "Bash(pip install *)",
+      "Bash(pip show *)",
+      "Bash(python -c \"import torchaudio; print\\('torchaudio', torchaudio.__version__\\); from torchaudio.backend.utils import list_audio_backends; print\\('backends:', list_audio_backends\\(\\)\\)\")",
+      "Bash(findstr /i \"name version\")",
+      "Bash(python *)",
+      "Bash(where.exe ffmpeg *)",
+      "Bash(Get-Command ffmpeg *)",
+      "Bash(Select-Object -ExpandProperty Source)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(Get-ChildItem *)"
+    ]
+  }
+}

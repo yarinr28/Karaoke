@@ -1,0 +1,19 @@
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
+python-multipart==0.0.9
+aiofiles==23.2.1
+# Audio processing
+demucs==4.0.1
+torch>=2.1.0
+torchaudio==2.5.1
+faster-whisper==1.0.0
+stable-ts>=2.17.0
+# Metadata
+mutagen==1.47.0
+# HTTP client (Musixmatch API)
+httpx==0.27.0
+# Database
+motor==3.4.0
+pymongo==4.7.2
+# CORS, etc.
+python-dotenv==1.0.1

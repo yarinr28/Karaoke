@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karaoke</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <aside id="sidebar">
+            <div id="sidebar-header">
+                <h1>Karaoke</h1>
+                <input type="text" id="searchInput" placeholder="Search songs...">
+            </div>
+            <div id="songList">
+                <div class="empty-state">Loading songs...</div>
+            </div>
+        </aside>
+
+        <main id="main">
+            <div id="lyricsContainer">
+                <div id="noSong">
+                    <div class="big-icon">🎤</div>
+                    <p>Select a song to start singing</p>
+                </div>
+                <div id="noLyrics" hidden>
+                    <div class="big-icon">🎵</div>
+                    <p>No lyrics available</p>
+                    <p class="subtitle">Add a <code>.lrc</code> file with the same name as the song</p>
+                </div>
+                <ul id="lyricsList" hidden></ul>
+            </div>
+        </main>
+
+        <footer id="player">
+            <div id="playerInfo">
+                <span id="songTitle">No song selected</span>
+                <span id="lyricsTag"></span>
+            </div>
+
+            <div id="playerControls">
+                <button id="prevBtn" title="Previous (or restart)">⏮</button>
+                <button id="playBtn" title="Play / Pause" disabled>▶</button>
+                <button id="nextBtn" title="Next">⏭</button>
+            </div>
+
+            <div id="playerProgress">
+                <span id="currentTime">0:00</span>
+                <input type="range" id="progressBar" min="0" max="1000" value="0">
+                <span id="duration">0:00</span>
+            </div>
+
+            <div id="playerVolume">
+                <span id="volIcon" title="Mute / Unmute">🔊</span>
+                <input type="range" id="volumeBar" min="0" max="100" value="80">
+            </div>
+        </footer>
+    </div>
+
+    <audio id="audio"></audio>
+    <script src="app.js"></script>
+</body>
+</html>
