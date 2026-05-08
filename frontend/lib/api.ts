@@ -53,3 +53,11 @@ export async function uploadSong(
 export async function deleteSong(id: string): Promise<void> {
   await fetch(`${BASE}/songs/${id}`, { method: 'DELETE' });
 }
+
+export async function updateLyrics(songId: string, lyrics: string): Promise<Song> {
+  const fd = new FormData();
+  fd.append('lyrics', lyrics);
+  const res = await fetch(`${BASE}/songs/${songId}/lyrics`, { method: 'POST', body: fd });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}

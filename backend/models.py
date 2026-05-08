@@ -33,7 +33,53 @@ def new_song_doc(
     }
 
 
+def _normalize_word(w: dict) -> dict:
+    """Ensure word dict uses the 'word' key (migrate legacy 'text' key)."""
+    if "word" not in w and "text" in w:
+        return {"word": w["text"], "start": w["start"], "end": w["end"]}
+    return w
+
+
+def _normalize_lyrics(raw: dict | None) -> dict | None:
+    """
+    Always return the line-based format:
+      {"lines": [{"words": [{word, start, end}]}], "language": ..., "is_rtl": ...}
+
+    Handles three legacy shapes:
+      • already line-based  → normalise word keys, return as-is
+      • flat {"words": [...]} → group into lines of 8 words
+      • None / missing       → return None
+    """
+    if not raw:
+        return raw
+
+    if "lines" in raw:
+        return {
+            **raw,
+            "lines": [
+                {"words": [_normalize_word(w) for w in line.get("words", [])]}
+                for line in raw["lines"]
+            ],
+        }
+
+    if "words" in raw:
+        words = [_normalize_word(w) for w in raw["words"]]
+        line_size = 8
+        lines = [
+            {"words": words[i: i + line_size]}
+            for i in range(0, len(words), line_size)
+        ]
+        return {
+            "lines": lines,
+            "language": raw.get("language", "unknown"),
+            "is_rtl": raw.get("is_rtl", False),
+        }
+
+    return raw
+
+
 def doc_to_dict(doc: dict) -> dict:
+    raw_lyrics = json.loads(doc["lyrics_json"]) if doc.get("lyrics_json") else None
     return {
         "id": str(doc["_id"]),
         "title": doc["title"],
@@ -46,7 +92,7 @@ def doc_to_dict(doc: dict) -> dict:
         "processing_step": doc.get("processing_step", ""),
         "processing_progress": doc.get("processing_progress", 0),
         "processing_error": doc.get("processing_error"),
-        "lyrics": json.loads(doc["lyrics_json"]) if doc.get("lyrics_json") else None,
+        "lyrics": _normalize_lyrics(raw_lyrics),
         "language": doc.get("language"),
         "is_rtl": bool(doc.get("is_rtl", False)),
         "created_at": doc.get("created_at"),
@@ -56,7 +102,7 @@ def doc_to_dict(doc: dict) -> dict:
 # ── Pydantic schemas ──────────────────────────────────────────────────────────
 
 class WordTimestamp(BaseModel):
-    text: str
+    word: str
     start: float
     end: float
 

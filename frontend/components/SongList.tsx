@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { Song } from '@/types';
-import { fetchSongs } from '@/lib/api';
+import { fetchSongs, updateLyrics } from '@/lib/api';
 import ProcessingStatus from './ProcessingStatus';
 
 interface Props {
@@ -20,6 +20,9 @@ export default function SongList({ activeSongId, onSelect, onAddToQueue, onListC
   const [songs, setSongs] = useState<Song[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [lyricsInput, setLyricsInput] = useState('');
+  const [lyricsSubmitting, setLyricsSubmitting] = useState(false);
 
   const load = useCallback(async () => {
     const list = await fetchSongs().catch(() => [] as Song[]);
@@ -33,6 +36,26 @@ export default function SongList({ activeSongId, onSelect, onAddToQueue, onListC
   const handleReady = useCallback((updated: Song) => {
     setSongs((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
   }, []);
+
+  const openLyricsEditor = (song: Song) => {
+    setEditingId(song.id);
+    setLyricsInput('');
+  };
+
+  const submitLyrics = async (songId: string) => {
+    if (!lyricsInput.trim()) return;
+    setLyricsSubmitting(true);
+    try {
+      const updated = await updateLyrics(songId, lyricsInput);
+      setSongs((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+      setEditingId(null);
+      setLyricsInput('');
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to update lyrics');
+    } finally {
+      setLyricsSubmitting(false);
+    }
+  };
 
   const filtered = query
     ? songs.filter((s) => `${s.title} ${s.artist}`.toLowerCase().includes(query.toLowerCase()))
@@ -79,44 +102,83 @@ export default function SongList({ activeSongId, onSelect, onAddToQueue, onListC
         ) : (
           ready.map((song) => {
             const isActive = song.id === activeSongId;
+            const isEditing = editingId === song.id;
             return (
-              <div
-                key={song.id}
-                onClick={() => song.processing_state === 'done' && onSelect(song)}
-                className={`flex items-center gap-2.5 px-4 py-2.5 border-l-[3px] group transition-colors ${
-                  song.processing_state !== 'done'
-                    ? 'opacity-50 cursor-not-allowed border-transparent'
-                    : isActive
-                    ? 'bg-active-bg border-accent-bright cursor-pointer'
-                    : 'border-transparent hover:bg-surface cursor-pointer'
-                }`}
-              >
-                <span className={`text-sm shrink-0 ${isActive ? 'animate-bounce' : ''}`}>
-                  {song.processing_state === 'error' ? '⚠️' : isActive ? '🎵' : '🎤'}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm truncate ${isActive ? 'text-purple-300 font-semibold' : 'text-white'}`}>
-                    {song.title}
-                  </p>
-                  {song.artist && <p className="text-xs text-text-dim truncate">{song.artist}</p>}
+              <div key={song.id}>
+                <div
+                  onClick={() => song.processing_state === 'done' && onSelect(song)}
+                  className={`flex items-center gap-2.5 px-4 py-2.5 border-l-[3px] group transition-colors ${
+                    song.processing_state !== 'done'
+                      ? 'opacity-50 cursor-not-allowed border-transparent'
+                      : isActive
+                      ? 'bg-active-bg border-accent-bright cursor-pointer'
+                      : 'border-transparent hover:bg-surface cursor-pointer'
+                  }`}
+                >
+                  <span className={`text-sm shrink-0 ${isActive ? 'animate-bounce' : ''}`}>
+                    {song.processing_state === 'error' ? '⚠️' : isActive ? '🎵' : '🎤'}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm truncate ${isActive ? 'text-purple-300 font-semibold' : 'text-white'}`}>
+                      {song.title}
+                    </p>
+                    {song.artist && <p className="text-xs text-text-dim truncate">{song.artist}</p>}
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-xs text-text-dim">{fmt(song.duration)}</span>
+                    {song.is_rtl && (
+                      <span title="Hebrew/RTL" className="text-[10px] text-yellow-400 bg-yellow-900/30 border border-yellow-700/30 px-1 rounded">
+                        RTL
+                      </span>
+                    )}
+                    {song.processing_state === 'done' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); isEditing ? setEditingId(null) : openLyricsEditor(song); }}
+                        title="Edit / sync lyrics"
+                        className={`text-[11px] px-1.5 py-0.5 rounded border transition-colors opacity-0 group-hover:opacity-100 ${
+                          isEditing
+                            ? 'border-accent text-accent'
+                            : 'border-border text-text-dim hover:border-accent hover:text-white'
+                        }`}
+                      >
+                        {isEditing ? 'close' : '✏️'}
+                      </button>
+                    )}
+                    {onAddToQueue && song.processing_state === 'done' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onAddToQueue(song); }}
+                        className="text-text-dim hover:text-white opacity-0 group-hover:opacity-100 transition-opacity text-base leading-none"
+                        title="Add to queue"
+                      >
+                        +
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-xs text-text-dim">{fmt(song.duration)}</span>
-                  {song.is_rtl && (
-                    <span title="Hebrew/RTL" className="text-[10px] text-yellow-400 bg-yellow-900/30 border border-yellow-700/30 px-1 rounded">
-                      RTL
-                    </span>
-                  )}
-                  {onAddToQueue && song.processing_state === 'done' && (
+
+                {/* Inline lyrics editor */}
+                {isEditing && (
+                  <div className="mx-3 mb-2 p-3 bg-bg border border-border rounded-xl space-y-2">
+                    <p className="text-[11px] text-text-dim">
+                      Paste the correct lyrics. The AI will sync timestamps to your exact words and save to DB.
+                    </p>
+                    <textarea
+                      dir="auto"
+                      rows={6}
+                      placeholder="Paste lyrics here…"
+                      value={lyricsInput}
+                      onChange={(e) => setLyricsInput(e.target.value)}
+                      className="w-full rounded-lg bg-surface border border-border px-2.5 py-2 text-xs text-white placeholder-text-dim/40 resize-none focus:outline-none focus:border-accent/60 font-mono leading-relaxed"
+                    />
                     <button
-                      onClick={(e) => { e.stopPropagation(); onAddToQueue(song); }}
-                      className="text-text-dim hover:text-white opacity-0 group-hover:opacity-100 transition-opacity text-base leading-none"
-                      title="Add to queue"
+                      disabled={!lyricsInput.trim() || lyricsSubmitting}
+                      onClick={() => submitLyrics(song.id)}
+                      className="w-full py-1.5 rounded-lg bg-accent hover:bg-accent-bright disabled:opacity-40 text-white text-xs font-semibold transition-colors"
                     >
-                      +
+                      {lyricsSubmitting ? 'Syncing…' : 'Sync & Save Lyrics'}
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             );
           })

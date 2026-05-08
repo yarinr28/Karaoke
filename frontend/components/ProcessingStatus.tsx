@@ -11,6 +11,8 @@ interface Props {
 const STATE_ICON: Record<string, string> = {
   queued: '⏳',
   separating: '🎛',
+  fetching_lyrics: '🔍',
+  aligning: '🎯',
   transcribing: '📝',
   done: '✅',
   error: '❌',

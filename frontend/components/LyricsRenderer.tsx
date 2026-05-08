@@ -1,53 +1,63 @@
 'use client';
-import { useRef, useEffect, memo } from 'react';
-import { WordTimestamp } from '@/types';
+import { useRef, useEffect, useMemo, memo } from 'react';
+import { LyricsLine, WordTimestamp } from '@/types';
 
 interface Props {
-  words: WordTimestamp[];
+  lines: LyricsLine[];
   currentTime: number;
   isRTL: boolean;
   onWordClick?: (time: number) => void;
 }
 
-function findActiveIndex(words: WordTimestamp[], t: number): number {
-  let lo = 0, hi = words.length - 1, result = -1;
+interface FlatWord {
+  word: WordTimestamp;
+  li: number;   // line index
+  wi: number;   // word index within line
+}
+
+function buildFlat(lines: LyricsLine[]): FlatWord[] {
+  return lines.flatMap((line, li) =>
+    line.words.map((word, wi) => ({ word, li, wi }))
+  );
+}
+
+function findActiveFlat(flat: FlatWord[], t: number): number {
+  let lo = 0, hi = flat.length - 1, result = -1;
   while (lo <= hi) {
     const mid = (lo + hi) >> 1;
-    if (words[mid].start <= t) { result = mid; lo = mid + 1; }
+    if (flat[mid].word.start <= t) { result = mid; lo = mid + 1; }
     else hi = mid - 1;
   }
   return result;
 }
 
-// Group words into visual lines (~8 words each)
-function groupIntoLines(words: WordTimestamp[], lineSize = 8): WordTimestamp[][] {
-  const lines: WordTimestamp[][] = [];
-  for (let i = 0; i < words.length; i += lineSize) {
-    lines.push(words.slice(i, i + lineSize));
-  }
-  return lines;
-}
-
-const LyricsRenderer = memo(function LyricsRenderer({ words, currentTime, isRTL, onWordClick }: Props) {
-  const activeIdx = findActiveIndex(words, currentTime);
+const LyricsRenderer = memo(function LyricsRenderer({ lines, currentTime, isRTL, onWordClick }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const prevLineRef = useRef(-1);
+  const prevLineRef  = useRef(-1);
 
-  const lines = groupIntoLines(words);
+  const flat    = useMemo(() => buildFlat(lines), [lines]);
+  const flatIdx = findActiveFlat(flat, currentTime);
+  const activeLi = flatIdx >= 0 ? flat[flatIdx].li : -1;
+  const activeWi = flatIdx >= 0 ? flat[flatIdx].wi : -1;
 
-  // Find which line is active
-  let activeLine = -1;
-  if (activeIdx >= 0) activeLine = Math.floor(activeIdx / 8);
+  // Per-line global word offset (for past/future colouring)
+  const lineOffsets = useMemo(() => {
+    const offsets: number[] = [];
+    let acc = 0;
+    for (const line of lines) { offsets.push(acc); acc += line.words.length; }
+    return offsets;
+  }, [lines]);
 
   // Scroll active line into view
   useEffect(() => {
-    if (activeLine === prevLineRef.current || activeLine < 0) return;
-    prevLineRef.current = activeLine;
-    const el = containerRef.current?.children[activeLine] as HTMLElement;
+    if (activeLi < 0 || activeLi === prevLineRef.current) return;
+    prevLineRef.current = activeLi;
+    const el = containerRef.current?.children[activeLi] as HTMLElement | undefined;
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [activeLine]);
+  }, [activeLi]);
 
-  if (!words.length) {
+  const hasWords = lines.some(l => l.words.length > 0);
+  if (!hasWords) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-text-dim select-none">
         <div className="text-8xl mb-6 opacity-30">🎤</div>
@@ -56,7 +66,6 @@ const LyricsRenderer = memo(function LyricsRenderer({ words, currentTime, isRTL,
     );
   }
 
-  let wordIdx = 0;
   return (
     <div
       ref={containerRef}
@@ -69,24 +78,22 @@ const LyricsRenderer = memo(function LyricsRenderer({ words, currentTime, isRTL,
       }}
     >
       {lines.map((line, li) => {
-        const lineStart = wordIdx;
-        wordIdx += line.length;
-        const isActiveLine = li === activeLine;
-        const isPastLine = activeLine > li;
+        const isActiveLine = li === activeLi;
+        const isPastLine   = activeLi > li;
+        const offset       = lineOffsets[li];
 
         return (
           <div
             key={li}
             className={[
               'text-center leading-relaxed mb-2 transition-all duration-300',
-              isActiveLine ? 'opacity-100' : isPastLine ? 'opacity-30 scale-90' : 'opacity-40 scale-90',
+              isActiveLine ? 'opacity-100' : isPastLine ? 'opacity-30' : 'opacity-40',
             ].join(' ')}
             style={{ transform: isActiveLine ? 'scale(1)' : 'scale(0.88)' }}
           >
-            {line.map((word, wi) => {
-              const globalIdx = lineStart + wi;
-              const isActive = globalIdx === activeIdx;
-              const isPast = globalIdx < activeIdx;
+            {line.words.map((word, wi) => {
+              const isActive = isActiveLine && wi === activeWi;
+              const isPast   = offset + wi < flatIdx;
 
               return (
                 <span
@@ -104,7 +111,7 @@ const LyricsRenderer = memo(function LyricsRenderer({ words, currentTime, isRTL,
                   ].join(' ')}
                   style={isActive ? { textShadow: '0 0 20px rgba(168,85,247,0.9), 0 0 40px rgba(168,85,247,0.5)' } : undefined}
                 >
-                  {word.text}
+                  {word.word}
                 </span>
               );
             })}

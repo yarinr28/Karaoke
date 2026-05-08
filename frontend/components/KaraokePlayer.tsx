@@ -42,7 +42,7 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [togglePlay, seek, state.currentTime, state.duration]);
 
-  const words = song?.lyrics?.words || [];
+  const lines = song?.lyrics?.lines ?? [];
   const isRTL = song?.is_rtl || false;
 
   return (
@@ -68,7 +68,7 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
           </div>
         ) : (
           <LyricsRenderer
-            words={words}
+            lines={lines}
             currentTime={state.currentTime}
             isRTL={isRTL}
             onWordClick={seek}
