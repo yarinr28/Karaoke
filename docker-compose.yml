@@ -1,0 +1,120 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Karaoke — Unified Online/Offline Docker Compose
+#
+# QUICK START
+#   docker compose up -d
+#   → Frontend:  http://localhost:3000
+#   → Backend:   http://localhost:8000
+#
+# LAN PARTY MODE (phones on the same Wi-Fi)
+#   The backend already binds to 0.0.0.0.
+#   Guests open: http://<your-machine-ip>:3000
+#   The WebSocket URL is derived dynamically from window.location.hostname,
+#   so it just works — no extra config needed.
+#
+# TOGGLE OFFLINE MODE (disable AI, keep manual upload)
+#   Change OFFLINE_MODE=false → OFFLINE_MODE=true in the backend section below,
+#   then: docker compose up -d --build backend
+#   The UI will show an "Offline" badge on the AI tab and auto-switch to Manual.
+#
+# GPU ACCELERATION (optional — requires Nvidia Container Toolkit installed on host)
+#   Uncomment the `deploy` block in the backend service and set:
+#   WHISPER_DEVICE=cuda, WHISPER_COMPUTE=float16
+# ═══════════════════════════════════════════════════════════════════════════════
+
+services:
+
+  # ── MongoDB ──────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - karaoke
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── Backend (FastAPI + Demucs + Whisper) ─────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      # ── AI toggle ──────────────────────────────────────────────────────────
+      # "false" = full AI pipeline (Demucs + Whisper)  [default]
+      # "true"  = AI disabled; only manual upload works; UI shows Offline badge
+      - OFFLINE_MODE=false
+
+      # ── Database ────────────────────────────────────────────────────────────
+      - MONGO_URL=mongodb://mongodb:27017
+      - MONGO_DB=karaoke
+
+      # ── File storage ────────────────────────────────────────────────────────
+      # Host folder ./media_storage is mounted to /app/media_storage in the container.
+      - SONGS_DIR=/app/media_storage
+
+      # ── Whisper model ────────────────────────────────────────────────────────
+      # Sizes: tiny | base | small | medium | large-v2 | large-v3
+      - WHISPER_MODEL=large-v3
+      # CPU mode (default — works everywhere)
+      - WHISPER_DEVICE=cpu
+      - WHISPER_COMPUTE=int8
+      # GPU mode (uncomment + enable deploy block below):
+      # - WHISPER_DEVICE=cuda
+      # - WHISPER_COMPUTE=float16
+
+      # ── Optional Musixmatch lyrics API ───────────────────────────────────────
+      - MUSIXMATCH_API_KEY=
+    ports:
+      - "8000:8000"
+    volumes:
+      # Uploaded songs persist across container restarts on the host machine
+      - ./media_storage:/app/media_storage
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - karaoke
+    # ── GPU (Nvidia Container Toolkit required) ─────────────────────────────
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # ── Frontend (Next.js) ───────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Baked into .next/routes-manifest.json at build time (server-side rewrite target).
+        - NEXT_PUBLIC_API_URL=http://backend:8000
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - karaoke
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  mongo_data:    # MongoDB data — survives container restarts
+
+# ── Network ───────────────────────────────────────────────────────────────────
+networks:
+  karaoke:
+    driver: bridge

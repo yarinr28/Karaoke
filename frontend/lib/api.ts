@@ -2,6 +2,16 @@ import { Song } from '@/types';
 
 const BASE = '/api';
 
+export async function fetchStatus(): Promise<{ offline_mode: boolean; ai_available: boolean }> {
+  try {
+    const res = await fetch(`${BASE}/status`, { cache: 'no-store' });
+    if (!res.ok) return { offline_mode: false, ai_available: true };
+    return res.json();
+  } catch {
+    return { offline_mode: false, ai_available: true };
+  }
+}
+
 export async function fetchSongs(): Promise<Song[]> {
   const res = await fetch(`${BASE}/songs`, { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to fetch songs');

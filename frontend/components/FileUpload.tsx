@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { Song } from '@/types';
-import { uploadSong, uploadManual } from '@/lib/api';
+import { uploadSong, uploadManual, fetchStatus } from '@/lib/api';
 
 interface Props {
   onUploaded: (song: Song) => void;
@@ -101,10 +101,11 @@ function ProgressBar({ progress }: { progress: number }) {
 }
 
 export default function FileUpload({ onUploaded }: Props) {
-  const [open, setOpen]     = useState(false);
-  const [tab, setTab]       = useState<Tab>('ai');
+  const [open, setOpen]       = useState(false);
+  const [tab, setTab]         = useState<Tab>('ai');
   const [progress, setProgress] = useState<number | null>(null);
-  const [error, setError]   = useState<string | null>(null);
+  const [error, setError]     = useState<string | null>(null);
+  const [offlineMode, setOfflineMode] = useState(false);
 
   // Shared metadata
   const [title, setTitle]   = useState('');
@@ -144,6 +145,15 @@ export default function FileUpload({ onUploaded }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, close]);
+
+  useEffect(() => {
+    fetchStatus().then((s) => {
+      if (s.offline_mode) {
+        setOfflineMode(true);
+        setTab('manual');
+      }
+    });
+  }, []);
 
   const handleMetaJson = (value: string) => {
     setMetaJson(value);
@@ -237,19 +247,34 @@ export default function FileUpload({ onUploaded }: Props) {
 
             {/* Tabs */}
             <div className="flex shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
-              {([['ai', '✦ AI Processing'], ['manual', '⚙ Manual Upload']] as [Tab, string][]).map(([t, label]) => (
-                <button
-                  key={t}
-                  onClick={() => { setTab(t); setError(null); }}
-                  className="flex-1 py-2.5 text-xs font-medium transition-colors"
-                  style={{
-                    color: tab === t ? 'var(--accent)' : 'var(--color-text-dim)',
-                    borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
+              {([['ai', '✦ AI Processing'], ['manual', '⚙ Manual Upload']] as [Tab, string][]).map(([t, label]) => {
+                const isAiDisabled = t === 'ai' && offlineMode;
+                return (
+                  <button
+                    key={t}
+                    onClick={() => { if (!isAiDisabled) { setTab(t); setError(null); } }}
+                    disabled={isAiDisabled}
+                    title={isAiDisabled ? 'Offline Mode: AI features disabled' : undefined}
+                    className="flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
+                    style={{
+                      color: isAiDisabled ? 'var(--color-text-dim)' : tab === t ? 'var(--accent)' : 'var(--color-text-dim)',
+                      borderBottom: !isAiDisabled && tab === t ? '2px solid var(--accent)' : '2px solid transparent',
+                      opacity: isAiDisabled ? 0.5 : 1,
+                      cursor: isAiDisabled ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {label}
+                    {isAiDisabled && (
+                      <span
+                        className="text-[9px] px-1.5 py-0.5 rounded font-semibold"
+                        style={{ background: 'rgba(239,68,68,0.15)', color: 'rgba(239,120,100,0.9)' }}
+                      >
+                        Offline
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Scrollable body */}

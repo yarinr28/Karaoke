@@ -14,6 +14,7 @@ import json
 import os
 from pathlib import Path
 from fastapi import APIRouter
+from config import OFFLINE_MODE
 from database import get_songs_col
 
 router = APIRouter(prefix="/process", tags=["process"])
@@ -27,6 +28,15 @@ async def _update(song_id: str, **fields):
 
 async def run_pipeline(song_id: str):
     """Async background task — runs the full processing pipeline for one song."""
+    if OFFLINE_MODE:
+        await _update(
+            song_id,
+            processing_state="error",
+            processing_step="AI processing disabled",
+            processing_error="Server is running in offline mode. AI features are unavailable.",
+        )
+        return
+
     from services import demucs_service, whisper_service, musixmatch_service
 
     col = get_songs_col()

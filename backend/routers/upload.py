@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks
 import aiofiles
+from config import OFFLINE_MODE
 from database import get_songs_col
 from models import new_song_doc, doc_to_dict, sanitize_filename
 from routers.process import run_pipeline
@@ -101,6 +102,12 @@ async def upload_song(
     title: str = Form(""),
     artist: str = Form(""),
 ):
+    if OFFLINE_MODE:
+        raise HTTPException(
+            status_code=503,
+            detail="AI processing is disabled in offline mode. Use the Manual Upload tab instead.",
+        )
+
     ext = Path(file.filename or "").suffix.lower()
     if ext not in ALLOWED:
         raise HTTPException(status_code=400, detail=f"Unsupported format: {ext}")

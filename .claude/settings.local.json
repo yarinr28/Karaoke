@@ -26,7 +26,11 @@
       "Bash(powershell -Command \"\\(Get-Content page.tsx\\) -replace 'rgba\\\\\\(255,255,255,0\\\\.07\\\\\\)', 'var\\(--color-border\\)' -replace 'rgba\\\\\\(255,255,255,0\\\\.40\\\\\\)', 'var\\(--color-text-dim\\)' -replace \\\\\"'rgba\\\\\\(255,255,255,0\\\\.4\\\\\\)'\\\\\", \\\\\"'var\\(--color-text-dim\\)'\\\\\" -replace 'rgba\\\\\\(255,255,255,0\\\\.05\\\\\\)', 'var\\(--color-surface\\)' -replace 'rgba\\\\\\(255,255,255,0\\\\.09\\\\\\)', 'var\\(--color-border\\)' -replace 'rgba\\\\\\(255,255,255,0\\\\.04\\\\\\)', 'var\\(--color-surface\\)' -replace 'rgba\\\\\\(255,255,255,0\\\\.06\\\\\\)', 'var\\(--color-border\\)' | Set-Content page.tsx\")",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Yarin Raziel\\\\Desktop\\\\general\\\\code\\\\Karaoke\\\\backend\" -Recurse -Depth 2)",
       "Bash(Select-Object FullName, Mode)",
-      "Bash(Format-Table -AutoSize)"
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Yarin Raziel\\\\Desktop\\\\general\\\\code\\\\Karaoke\" -Force | Select-Object Name, @{Label=\"Type\"; Expression={if\\($_.PSIsContainer\\) {\"Dir\"} else {\"File\"}}} | Format-Table -AutoSize)",
+      "Bash(grep -E \"\\\\.\\(py|txt|yml|yaml\\)$\")",
+      "Bash(grep -E \"\\\\.tsx$\")",
+      "Bash(grep -E \"\\\\.ts$\")"
     ]
   }
 }
