@@ -24,7 +24,9 @@ export function useKaraokeAudio(song: Song | null) {
   // Whether the current song has separate instrumental + vocals stems
   const hasDualRef      = useRef(false);
   // Pending seeked-listener cleanup (handles rapid drag on seek bar)
-  const pendingSeekRef  = useRef<(() => void) | null>(null);
+  const pendingSeekRef    = useRef<(() => void) | null>(null);
+  // True when a drag-seek started while audio was playing; preserved across rapid seeks
+  const seekWasPlayingRef = useRef(false);
 
   const [state, setState] = useState<KaraokeAudioState>({
     isPlaying: false,
@@ -86,11 +88,9 @@ export function useKaraokeAudio(song: Song | null) {
     if (loadedSongIdRef.current === s.id) return;
     loadedSongIdRef.current = s.id;
 
-    ctxInitialized.current = false;
-    ctxRef.current?.close();
-    ctxRef.current = null;
-    analyserRef.current = null;
-    setAnalyser(null);
+    // Do NOT close/reset the AudioContext — createMediaElementSource can only be
+    // called once per HTMLMediaElement. The source nodes stay permanently wired;
+    // only the src attribute changes between songs.
 
     const hasDual = !!s.instrumental_filename && !!s.vocals_filename;
     hasDualRef.current = hasDual;
@@ -151,22 +151,25 @@ export function useKaraokeAudio(song: Song | null) {
     const vocals = vocalsRef.current;
     if (!inst) return;
 
-    const wasPlaying = !inst.paused;
+    // Capture playing state only on the first seek of a drag.
+    if (!pendingSeekRef.current) {
+      seekWasPlayingRef.current = !inst.paused;
+    }
+    const wasPlaying = seekWasPlayingRef.current;
 
-    // ── 1. Pause both tracks immediately ─────────────────────────────────────
+    // ── 1. Pause both tracks internally (no UI state change — button must not flicker)
     inst.pause();
     if (hasDualRef.current && vocals) vocals.pause();
 
-    // ── 2. Update UI state right away so lyrics snap + slider stays put ──────
-    setState((prev) => ({ ...prev, currentTime: time, isPlaying: false }));
+    // ── 2. Advance the lyrics / seek-bar position without touching isPlaying ──
+    setState((prev) => ({ ...prev, currentTime: time }));
 
-    // ── 3. Apply the seek to both elements ───────────────────────────────────
+    // ── 3. Apply the seek ────────────────────────────────────────────────────
     inst.currentTime = time;
     if (hasDualRef.current && vocals) vocals.currentTime = time;
 
-    // ── 4. If we were playing, resume after the browser confirms the seek ────
+    // ── 4. Resume after the browser confirms the seek (if we were playing) ───
     if (wasPlaying) {
-      // Remove any leftover listener from a previous rapid drag
       if (pendingSeekRef.current) {
         inst.removeEventListener('seeked', pendingSeekRef.current);
         pendingSeekRef.current = null;
@@ -175,19 +178,25 @@ export function useKaraokeAudio(song: Song | null) {
       const onSeeked = () => {
         inst.removeEventListener('seeked', onSeeked);
         pendingSeekRef.current = null;
+        seekWasPlayingRef.current = false;
 
         inst.play().then(() => {
-          if (vocals?.src) {
-            // Re-sync vocals after seek is confirmed complete
+          if (hasDualRef.current && vocals) {
             vocals.currentTime = inst.currentTime;
             vocals.play().catch(() => {});
           }
-          setState((prev) => ({ ...prev, isPlaying: true }));
-        }).catch(() => {});
+          // isPlaying was already true — no state update needed
+        }).catch(() => {
+          // Play failed (e.g. browser policy) — reflect the real paused state
+          setState((prev) => ({ ...prev, isPlaying: false }));
+        });
       };
 
       pendingSeekRef.current = onSeeked;
       inst.addEventListener('seeked', onSeeked);
+    } else {
+      // Was paused before drag — make sure isPlaying reflects that
+      setState((prev) => ({ ...prev, isPlaying: false }));
     }
   }, []);
 

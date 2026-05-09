@@ -11,8 +11,8 @@ interface Props {
 
 interface FlatWord {
   word: WordTimestamp;
-  li: number;   // line index
-  wi: number;   // word index within line
+  li: number;
+  wi: number;
 }
 
 function buildFlat(lines: LyricsLine[]): FlatWord[] {
@@ -40,7 +40,6 @@ const LyricsRenderer = memo(function LyricsRenderer({ lines, currentTime, isRTL,
   const activeLi = flatIdx >= 0 ? flat[flatIdx].li : -1;
   const activeWi = flatIdx >= 0 ? flat[flatIdx].wi : -1;
 
-  // Per-line global word offset (for past/future colouring)
   const lineOffsets = useMemo(() => {
     const offsets: number[] = [];
     let acc = 0;
@@ -48,7 +47,6 @@ const LyricsRenderer = memo(function LyricsRenderer({ lines, currentTime, isRTL,
     return offsets;
   }, [lines]);
 
-  // Scroll active line into view
   useEffect(() => {
     if (activeLi < 0 || activeLi === prevLineRef.current) return;
     prevLineRef.current = activeLi;
@@ -59,9 +57,9 @@ const LyricsRenderer = memo(function LyricsRenderer({ lines, currentTime, isRTL,
   const hasWords = lines.some(l => l.words.length > 0);
   if (!hasWords) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-text-dim select-none">
-        <div className="text-8xl mb-6 opacity-30">🎤</div>
-        <p className="text-xl">No lyrics available yet</p>
+      <div className="flex flex-col items-center justify-center h-full select-none">
+        <div className="text-7xl mb-5 opacity-20" style={{ filter: 'grayscale(1)' }}>🎤</div>
+        <p className="text-base text-text-dim">No lyrics available yet</p>
       </div>
     );
   }
@@ -69,10 +67,13 @@ const LyricsRenderer = memo(function LyricsRenderer({ lines, currentTime, isRTL,
   return (
     <div
       ref={containerRef}
-      className="w-full h-full overflow-y-auto px-12"
+      dir={isRTL ? 'rtl' : 'ltr'}
+      className="w-full h-full overflow-y-auto"
       style={{
-        paddingTop: '40vh',
-        paddingBottom: '40vh',
+        paddingTop: '38vh',
+        paddingBottom: '38vh',
+        paddingLeft: '2rem',
+        paddingRight: '2rem',
         scrollbarWidth: 'none',
         direction: isRTL ? 'rtl' : 'ltr',
       }}
@@ -85,31 +86,45 @@ const LyricsRenderer = memo(function LyricsRenderer({ lines, currentTime, isRTL,
         return (
           <div
             key={li}
-            className={[
-              'text-center leading-relaxed mb-2 transition-all duration-300',
-              isActiveLine ? 'opacity-100' : isPastLine ? 'opacity-30' : 'opacity-40',
-            ].join(' ')}
-            style={{ transform: isActiveLine ? 'scale(1)' : 'scale(0.88)' }}
+            dir={isRTL ? 'rtl' : 'ltr'}
+            className="text-center leading-loose mb-4"
+            style={{
+              transform: isActiveLine ? 'scale(1)' : 'scale(0.84)',
+              opacity: isActiveLine ? 1 : isPastLine ? 0.18 : 0.24,
+              transition: 'transform 0.4s ease-out, opacity 0.4s ease-out',
+              fontSize: '2rem',
+              fontWeight: 500,
+            }}
           >
             {line.words.map((word, wi) => {
-              const isActive = isActiveLine && wi === activeWi;
-              const isPast   = offset + wi < flatIdx;
+              const isActive   = isActiveLine && wi === activeWi;
+              const isPastWord = offset + wi < flatIdx;
 
               return (
                 <span
                   key={wi}
                   onClick={() => onWordClick?.(word.start)}
-                  className={[
-                    'cursor-pointer transition-colors duration-75 mx-0.5',
-                    isActiveLine
-                      ? isActive
-                        ? 'text-accent-bright font-bold text-4xl animate-glow'
-                        : isPast
-                        ? 'text-white text-3xl font-semibold'
-                        : 'text-white/60 text-3xl'
-                      : 'text-text-dim text-2xl',
-                  ].join(' ')}
-                  style={isActive ? { textShadow: '0 0 20px rgba(168,85,247,0.9), 0 0 40px rgba(168,85,247,0.5)' } : undefined}
+                  className="cursor-pointer"
+                  style={{
+                    display: 'inline-block',
+                    margin: '0 0.2em',
+                    unicodeBidi: 'isolate',
+                    // Color: active word pops in purple, past words white, future words dimmed
+                    color: isActive
+                      ? '#a855f7'
+                      : isActiveLine
+                      ? isPastWord ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.38)'
+                      : '#ffffff',
+                    // Glow only on active word
+                    textShadow: isActive
+                      ? '0 0 18px rgba(168,85,247,0.95), 0 0 40px rgba(168,85,247,0.5), 0 0 70px rgba(168,85,247,0.2)'
+                      : 'none',
+                    // Scale up the active word for the pop effect
+                    transform: isActive ? 'scale(1.18)' : 'scale(1)',
+                    transformOrigin: 'center 80%',
+                    // Single smooth transition on every property
+                    transition: 'color 0.15s ease-out, text-shadow 0.2s ease-out, transform 0.2s ease-out, opacity 0.15s ease-out',
+                  }}
                 >
                   {word.word}
                 </span>

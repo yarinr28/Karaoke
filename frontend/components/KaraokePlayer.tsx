@@ -16,6 +16,24 @@ function fmt(s: number) {
   return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 }
 
+function VolumeIcon({ vol }: { vol: number }) {
+  if (vol === 0) return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+    </svg>
+  );
+  if (vol < 0.5) return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+    </svg>
+  );
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+    </svg>
+  );
+}
+
 export default function KaraokePlayer({ song, onEnded }: Props) {
   const audio = useKaraokeAudio(song);
   const { state, analyser, instRef, vocalsRef, seek, setSpeed, togglePlay, toggleKaraokeMode, setVolume, loadSong, onInstrumentalLoaded, onEnded: handleEnded } = audio;
@@ -34,7 +52,6 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
     onEnded();
   }, [handleEnded, onEnded]);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).tagName === 'INPUT') return;
@@ -51,24 +68,27 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Hidden audio elements */}
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <audio
-        ref={instRef}
-        onLoadedMetadata={onInstrumentalLoaded}
-        onEnded={handleEnded_}
-        crossOrigin="anonymous"
-      />
+      <audio ref={instRef} onLoadedMetadata={onInstrumentalLoaded} onEnded={handleEnded_} crossOrigin="anonymous" />
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <audio ref={vocalsRef} crossOrigin="anonymous" />
 
-      {/* Lyrics area with visualizer */}
-      <div className="relative flex-1 overflow-hidden" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 40%, #1a0a2e 0%, #0d0d1a 70%)' }}>
+      {/* Lyrics / ambient area */}
+      <div
+        className="relative flex-1 overflow-hidden"
+        style={{
+          background: state.isPlaying
+            ? 'radial-gradient(ellipse 90% 70% at 50% 40%, #1a0535 0%, #08021a 55%, #030308 100%)'
+            : 'radial-gradient(ellipse 80% 60% at 50% 40%, #0d0820 0%, #030308 70%)',
+          transition: 'background 1.5s ease',
+        }}
+      >
         <Visualizer analyser={analyser} isPlaying={state.isPlaying} />
+
         {!song ? (
-          <div className="flex flex-col items-center justify-center h-full text-text-dim select-none">
-            <div className="text-8xl mb-6 opacity-30">🎤</div>
-            <p className="text-xl">Select a song to start singing</p>
+          <div className="flex flex-col items-center justify-center h-full select-none pointer-events-none">
+            <div className="text-7xl mb-5 opacity-20" style={{ filter: 'grayscale(1)' }}>🎤</div>
+            <p className="text-base text-text-dim">Select a song to start singing</p>
           </div>
         ) : (
           <LyricsRenderer
@@ -80,29 +100,18 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
         )}
       </div>
 
-      {/* Player bar */}
-      <footer className="flex items-center gap-4 px-5 h-20 bg-player border-t border-border shrink-0">
-        {/* Song info */}
-        <div className="w-44 min-w-0 shrink-0 flex flex-col">
-          <span className="text-sm font-semibold text-white truncate">{song?.title || 'No song'}</span>
-          <span className="text-xs text-text-dim truncate">{song?.artist}</span>
-          {song?.language && (
-            <span className="text-[10px] text-text-dim opacity-60">{song.language.toUpperCase()}</span>
-          )}
-        </div>
-
-        {/* Play */}
-        <button
-          onClick={togglePlay}
-          disabled={!song}
-          className="w-11 h-11 rounded-full bg-accent hover:bg-accent-bright disabled:opacity-30 text-white flex items-center justify-center shrink-0 transition-colors"
-        >
-          {state.isPlaying ? '⏸' : '▶'}
-        </button>
-
-        {/* Progress */}
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-xs text-text-dim tabular-nums w-9 shrink-0">{fmt(state.currentTime)}</span>
+      {/* ── Footer shell ──────────────────────────────────────────── */}
+      <footer
+        className="shrink-0"
+        style={{
+          background: 'rgba(3,3,8,0.88)',
+          backdropFilter: 'blur(32px)',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        {/* Row 1: seek bar + times */}
+        <div className="flex items-center gap-3 px-5 pt-3 pb-1">
+          <span className="text-[11px] text-text-dim tabular-nums w-8 shrink-0">{fmt(state.currentTime)}</span>
           <input
             type="range"
             min={0}
@@ -113,50 +122,97 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
             className="seek-bar flex-1"
             style={{ '--fill': `${seekPct}%` } as React.CSSProperties}
           />
-          <span className="text-xs text-text-dim tabular-nums w-9 shrink-0 text-right">{fmt(state.duration)}</span>
+          <span className="text-[11px] text-text-dim tabular-nums w-8 shrink-0 text-right">{fmt(state.duration)}</span>
         </div>
 
-        {/* Speed */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-xs text-text-dim">Speed</span>
-          <select
-            value={state.speed}
-            onChange={(e) => setSpeed(parseFloat(e.target.value))}
-            className="bg-surface border border-border rounded text-xs text-white px-1 py-0.5 outline-none"
+        {/* Row 2: controls */}
+        <div className="flex items-center gap-4 px-5 py-3">
+          {/* Song info */}
+          <div className="w-36 min-w-0 shrink-0">
+            <p dir="auto" className="text-sm font-semibold text-white truncate leading-tight" style={{ unicodeBidi: 'plaintext' }}>{song?.title || 'No song'}</p>
+            <p dir="auto" className="text-[11px] text-text-dim truncate" style={{ unicodeBidi: 'plaintext' }}>{song?.artist}</p>
+          </div>
+
+          {/* Play / Pause */}
+          <button
+            onClick={togglePlay}
+            disabled={!song}
+            className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 press-effect disabled:opacity-30 transition-all"
+            style={song ? {
+              background: state.isPlaying
+                ? 'rgba(168,85,247,0.15)'
+                : 'rgba(168,85,247,0.9)',
+              boxShadow: state.isPlaying
+                ? '0 0 0 1px rgba(168,85,247,0.4), 0 0 24px rgba(168,85,247,0.25)'
+                : '0 0 0 1px rgba(168,85,247,0.6), 0 0 32px rgba(168,85,247,0.5)',
+              color: state.isPlaying ? '#a855f7' : '#ffffff',
+            } : { background: 'rgba(255,255,255,0.08)', color: '#ffffff40' }}
           >
-            {[0.75, 1, 1.25, 1.5].map((s) => (
-              <option key={s} value={s}>{s}x</option>
-            ))}
-          </select>
-        </div>
+            {state.isPlaying ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '2px' }}>
+                <polygon points="5,3 19,12 5,21"/>
+              </svg>
+            )}
+          </button>
 
-        {/* Karaoke mode */}
-        <button
-          onClick={toggleKaraokeMode}
-          disabled={!song?.instrumental_filename}
-          title={song?.instrumental_filename ? 'Toggle karaoke mode' : 'Process song first'}
-          className={`px-3 py-1 rounded text-xs font-medium border transition-colors shrink-0 disabled:opacity-30 ${
-            state.karaokeMode
-              ? 'bg-accent border-accent-bright text-white'
-              : 'border-border text-text-dim hover:border-accent hover:text-white'
-          }`}
-        >
-          🎙 {state.karaokeMode ? 'Karaoke ON' : 'Karaoke'}
-        </button>
+          {/* Karaoke mode */}
+          <button
+            onClick={toggleKaraokeMode}
+            disabled={!song?.instrumental_filename}
+            title={song?.instrumental_filename ? 'Toggle karaoke mode' : 'Process song first'}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all press-effect shrink-0 disabled:opacity-30"
+            style={state.karaokeMode ? {
+              background: 'rgba(0,180,255,0.15)',
+              border: '1px solid rgba(0,180,255,0.4)',
+              color: '#00b4ff',
+              boxShadow: '0 0 16px rgba(0,180,255,0.2)',
+            } : {
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.5)',
+            }}
+          >
+            🎙 Karaoke
+          </button>
 
-        {/* Volume */}
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-sm">{vol === 0 ? '🔇' : vol < 0.5 ? '🔉' : '🔊'}</span>
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.02}
-            value={vol}
-            onChange={(e) => { const v = parseFloat(e.target.value); setVol(v); setVolume(v); }}
-            className="volume-bar w-20"
-            style={{ '--fill': `${volPct}%` } as React.CSSProperties}
-          />
+          {/* Speed */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[11px] text-text-dim">Speed</span>
+            <select
+              value={state.speed}
+              onChange={(e) => setSpeed(parseFloat(e.target.value))}
+              className="rounded-md text-xs text-white px-1.5 py-1 outline-none"
+              style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              {[0.75, 1, 1.25, 1.5].map((s) => (
+                <option key={s} value={s} style={{ background: '#0d0d1a', color: '#ffffff' }}>{s}x</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Volume */}
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
+            <button
+              onClick={() => { const v = vol > 0 ? 0 : 1; setVol(v); setVolume(v); }}
+              className="text-text-dim hover:text-white transition-colors"
+            >
+              <VolumeIcon vol={vol} />
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.02}
+              value={vol}
+              onChange={(e) => { const v = parseFloat(e.target.value); setVol(v); setVolume(v); }}
+              className="volume-bar w-20"
+              style={{ '--fill': `${volPct}%` } as React.CSSProperties}
+            />
+          </div>
         </div>
       </footer>
     </div>

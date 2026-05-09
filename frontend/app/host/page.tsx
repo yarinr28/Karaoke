@@ -14,7 +14,6 @@ export default function HostPage() {
   const [showCode, setShowCode] = useState(false);
   const ws = useQueueSocket();
 
-  // Create session on mount
   useEffect(() => {
     if (ws.connected && !ws.sessionCode) ws.createSession();
   }, [ws.connected, ws.sessionCode, ws.createSession]);
@@ -41,9 +40,7 @@ export default function HostPage() {
     try {
       const song = await fetchSong(nextItem.song_id);
       setCurrentSong(song);
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
   }, [ws]);
 
   const handleUploaded = useCallback((song: Song) => {
@@ -56,11 +53,11 @@ export default function HostPage() {
 
   return (
     <div
-      className="grid h-screen"
-      style={{ gridTemplateColumns: '260px 1fr 260px', gridTemplateRows: '1fr' }}
+      className="grid h-screen overflow-hidden"
+      style={{ gridTemplateColumns: '280px 1fr 280px' }}
     >
-      {/* Left: Song library */}
-      <aside className="bg-sidebar border-r border-border flex flex-col overflow-hidden">
+      {/* ── Left: Song library ─────────────────────────────────── */}
+      <aside className="flex flex-col overflow-hidden" style={{ background: 'rgba(5,5,12,0.96)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
         <SongList
           activeSongId={currentSong?.id || null}
           onSelect={handleSelect}
@@ -70,31 +67,39 @@ export default function HostPage() {
         <FileUpload onUploaded={handleUploaded} />
       </aside>
 
-      {/* Center: Player + Lyrics */}
-      <main className="flex flex-col overflow-hidden relative">
+      {/* ── Center: Player ─────────────────────────────────────── */}
+      <main className="flex flex-col overflow-hidden relative bg-player">
         <KaraokePlayer song={currentSong} onEnded={handleEnded} />
 
         {/* Session code badge */}
         {ws.sessionCode && (
-          <div className="absolute top-4 right-4 z-10">
+          <div className="absolute top-4 right-4 z-20">
             <button
               onClick={() => setShowCode((v) => !v)}
-              className="flex items-center gap-2 bg-surface/80 border border-border rounded-lg px-3 py-1.5 text-xs text-text-dim hover:text-white backdrop-blur-sm"
+              className="glass flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-white/60 hover:text-white transition-colors press-effect"
             >
-              📱 Guests
-              {showCode && <span className="font-mono font-bold text-accent-bright">{ws.sessionCode}</span>}
+              <span className="text-sm">📱</span>
+              <span>Guests</span>
+              {showCode && (
+                <span className="font-mono font-bold tracking-widest text-accent-bright ml-1">
+                  {ws.sessionCode}
+                </span>
+              )}
             </button>
+
             {showCode && (
-              <div className="absolute right-0 top-10 bg-sidebar border border-border rounded-xl p-4 shadow-2xl min-w-52">
-                <p className="text-xs text-text-dim mb-2">Guest link:</p>
-                <p className="font-mono text-3xl font-bold text-center text-accent-bright tracking-widest mb-3">
+              <div className="glass-strong absolute right-0 top-12 rounded-2xl p-5 shadow-2xl min-w-[220px] animate-scale-in">
+                <p className="text-[10px] text-text-dim uppercase tracking-widest mb-2">Guest link</p>
+                <p className="font-mono text-4xl font-black text-center text-accent-bright tracking-[0.15em] mb-4"
+                   style={{ textShadow: '0 0 20px rgba(0,255,135,0.5)' }}>
                   {ws.sessionCode}
                 </p>
                 <button
                   onClick={() => navigator.clipboard.writeText(guestUrl)}
-                  className="w-full text-xs border border-border rounded px-2 py-1.5 hover:border-accent transition-colors"
+                  className="w-full text-xs rounded-lg px-3 py-2 font-medium transition-colors press-effect"
+                  style={{ background: 'rgba(0,255,135,0.1)', border: '1px solid rgba(0,255,135,0.25)', color: '#00ff87' }}
                 >
-                  Copy link
+                  Copy Link
                 </button>
               </div>
             )}
@@ -102,8 +107,8 @@ export default function HostPage() {
         )}
       </main>
 
-      {/* Right: Queue */}
-      <aside className="bg-sidebar border-l border-border flex flex-col overflow-hidden">
+      {/* ── Right: Queue ───────────────────────────────────────── */}
+      <aside className="flex flex-col overflow-hidden" style={{ background: 'rgba(5,5,12,0.96)', borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
         <Queue
           queue={ws.session?.queue || []}
           currentItem={ws.session?.current_item || null}
