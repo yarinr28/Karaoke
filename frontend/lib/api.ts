@@ -61,3 +61,16 @@ export async function updateLyrics(songId: string, lyrics: string): Promise<Song
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+
+export async function updateSong(
+  id: string,
+  data: { title?: string; artist?: string; lyrics?: string },
+): Promise<Song> {
+  const res = await fetch(`${BASE}/songs/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}

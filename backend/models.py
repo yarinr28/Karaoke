@@ -92,6 +92,7 @@ def doc_to_dict(doc: dict) -> dict:
         "processing_step": doc.get("processing_step", ""),
         "processing_progress": doc.get("processing_progress", 0),
         "processing_error": doc.get("processing_error"),
+        "provided_lyrics": doc.get("provided_lyrics"),
         "lyrics": _normalize_lyrics(raw_lyrics),
         "language": doc.get("language"),
         "is_rtl": bool(doc.get("is_rtl", False)),
@@ -125,6 +126,7 @@ class SongResponse(BaseModel):
     processing_step: str
     processing_progress: int
     processing_error: Optional[str]
+    provided_lyrics: Optional[str]
     lyrics: Optional[dict]
     language: Optional[str]
     is_rtl: bool

@@ -20,7 +20,9 @@
       "PowerShell(Get-Command *)",
       "PowerShell(Get-ChildItem *)",
       "Bash(Get-ChildItem -Recurse -Path \"C:\\\\Users\\\\Yarin Raziel\\\\Desktop\\\\general\\\\code\\\\Karaoke\\\\frontend\" -Filter \"*.tsx\" -o File)",
-      "Bash(Select-Object -First 50)"
+      "Bash(Select-Object -First 50)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Yarin Raziel\\\\Desktop\\\\general\\\\code\\\\Karaoke\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)"
     ]
   }
 }

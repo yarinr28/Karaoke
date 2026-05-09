@@ -4,8 +4,10 @@ import os
 import re
 import traceback
 from pathlib import Path
+from typing import Optional
 from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
+from pydantic import BaseModel
 from database import get_songs_col
 from models import doc_to_dict
 
@@ -102,6 +104,55 @@ async def update_lyrics(
     }})
 
     background_tasks.add_task(_realign, song_id, lyrics_clean)
+
+    updated = await col.find_one({"_id": song_id})
+    return doc_to_dict(updated)
+
+
+class UpdateSongBody(BaseModel):
+    title: Optional[str] = None
+    artist: Optional[str] = None
+    lyrics: Optional[str] = None
+
+
+@router.patch("/{song_id}")
+async def update_song(
+    song_id: str,
+    background_tasks: BackgroundTasks,
+    body: UpdateSongBody,
+):
+    col = get_songs_col()
+    doc = await col.find_one({"_id": song_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Song not found")
+
+    update_fields = {}
+    if body.title is not None:
+        update_fields["title"] = body.title.strip()
+    if body.artist is not None:
+        update_fields["artist"] = body.artist.strip()
+
+    original_lyrics = (doc.get("provided_lyrics") or "").strip()
+    new_lyrics = body.lyrics.strip() if body.lyrics is not None else None
+    lyrics_changed = new_lyrics is not None and new_lyrics != original_lyrics
+
+    if lyrics_changed:
+        if not doc.get("vocals_filename"):
+            raise HTTPException(status_code=400, detail="Vocals stem not ready — process the song first")
+        update_fields.update({
+            "provided_lyrics": new_lyrics,
+            "lyrics_json": None,
+            "processing_state": "aligning",
+            "processing_step": "Aligning new lyrics with audio…",
+            "processing_progress": 10,
+            "processing_error": None,
+        })
+
+    if update_fields:
+        await col.update_one({"_id": song_id}, {"$set": update_fields})
+
+    if lyrics_changed:
+        background_tasks.add_task(_realign, song_id, new_lyrics)
 
     updated = await col.find_one({"_id": song_id})
     return doc_to_dict(updated)

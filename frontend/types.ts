@@ -26,6 +26,7 @@ export interface Song {
   processing_step: string;
   processing_progress: number;
   processing_error: string | null;
+  provided_lyrics: string | null;
   lyrics: LyricsData | null;
   language: string | null;
   is_rtl: boolean;
