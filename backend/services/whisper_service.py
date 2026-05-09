@@ -30,10 +30,21 @@ def _get_model():
     global _model
     if _model is None:
         import stable_whisper
+        import torch
 
         model_size = os.environ.get("WHISPER_MODEL", "large-v3")
-        device = os.environ.get("WHISPER_DEVICE", "cpu")
-        compute_type = os.environ.get("WHISPER_COMPUTE", "int8")
+        requested_device = os.environ.get("WHISPER_DEVICE", "cpu")
+        requested_compute = os.environ.get("WHISPER_COMPUTE", "int8")
+
+        # Fall back to CPU when CUDA is requested but unavailable
+        if requested_device == "cuda" and not torch.cuda.is_available():
+            print("[Whisper] CUDA not available — falling back to CPU")
+            device = "cpu"
+            # float16 is not efficient on CPU; use int8 instead
+            compute_type = "int8" if requested_compute == "float16" else requested_compute
+        else:
+            device = requested_device
+            compute_type = requested_compute
 
         print(f"[Whisper] Loading {model_size} on {device} ({compute_type})…")
         _model = stable_whisper.load_faster_whisper(
