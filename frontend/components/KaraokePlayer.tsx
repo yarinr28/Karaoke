@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { Song } from '@/types';
 import { useKaraokeAudio } from '@/hooks/useKaraokeAudio';
 import Visualizer from './Visualizer';
@@ -19,6 +19,10 @@ function fmt(s: number) {
 export default function KaraokePlayer({ song, onEnded }: Props) {
   const audio = useKaraokeAudio(song);
   const { state, analyser, instRef, vocalsRef, seek, setSpeed, togglePlay, toggleKaraokeMode, setVolume, loadSong, onInstrumentalLoaded, onEnded: handleEnded } = audio;
+
+  const [vol, setVol] = useState(1);
+  const seekPct = state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0;
+  const volPct  = vol * 100;
 
   useEffect(() => {
     if (!song) return;
@@ -106,7 +110,8 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
             step={0.1}
             value={state.currentTime}
             onChange={(e) => seek(parseFloat(e.target.value))}
-            className="flex-1"
+            className="seek-bar flex-1"
+            style={{ '--fill': `${seekPct}%` } as React.CSSProperties}
           />
           <span className="text-xs text-text-dim tabular-nums w-9 shrink-0 text-right">{fmt(state.duration)}</span>
         </div>
@@ -141,15 +146,16 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
 
         {/* Volume */}
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-sm">🔊</span>
+          <span className="text-sm">{vol === 0 ? '🔇' : vol < 0.5 ? '🔉' : '🔊'}</span>
           <input
             type="range"
             min={0}
             max={1}
             step={0.02}
-            defaultValue={1}
-            onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="w-20"
+            value={vol}
+            onChange={(e) => { const v = parseFloat(e.target.value); setVol(v); setVolume(v); }}
+            className="volume-bar w-20"
+            style={{ '--fill': `${volPct}%` } as React.CSSProperties}
           />
         </div>
       </footer>
