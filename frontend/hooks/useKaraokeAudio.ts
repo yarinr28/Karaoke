@@ -12,13 +12,17 @@ export interface KaraokeAudioState {
 }
 
 export function useKaraokeAudio(song: Song | null) {
-  const instRef = useRef<HTMLAudioElement | null>(null);
-  const vocalsRef = useRef<HTMLAudioElement | null>(null);
-  const ctxRef = useRef<AudioContext | null>(null);
-  const vocalsGainRef = useRef<GainNode | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const rafRef = useRef<number>(0);
+  const instRef        = useRef<HTMLAudioElement | null>(null);
+  const vocalsRef      = useRef<HTMLAudioElement | null>(null);
+  const ctxRef         = useRef<AudioContext | null>(null);
+  const vocalsGainRef  = useRef<GainNode | null>(null);
+  const analyserRef    = useRef<AnalyserNode | null>(null);
+  const rafRef         = useRef<number>(0);
   const ctxInitialized = useRef(false);
+  // Prevent re-loading audio when parent re-renders with the same song object
+  const loadedSongIdRef = useRef<string | null>(null);
+  // Pending seeked-listener cleanup (handles rapid drag on seek bar)
+  const pendingSeekRef  = useRef<(() => void) | null>(null);
 
   const [state, setState] = useState<KaraokeAudioState>({
     isPlaying: false,
@@ -27,15 +31,19 @@ export function useKaraokeAudio(song: Song | null) {
     karaokeMode: false,
     speed: 1,
   });
-
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
 
-  // rAF loop for smooth time tracking
+  // rAF — tracks currentTime only when playing.
+  // While paused (including during a seek), state.currentTime is set
+  // directly by seek() so the lyrics snap immediately without rAF interference.
   useEffect(() => {
     const tick = () => {
       const inst = instRef.current;
-      if (inst && !inst.paused) {
-        setState((prev) => ({ ...prev, currentTime: inst.currentTime }));
+      if (inst && !inst.paused && !inst.seeking) {
+        const t = inst.currentTime;
+        setState((prev) =>
+          Math.abs(prev.currentTime - t) < 0.016 ? prev : { ...prev, currentTime: t }
+        );
       }
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -50,12 +58,10 @@ export function useKaraokeAudio(song: Song | null) {
     const ctx = new window.AudioContext();
     ctxRef.current = ctx;
 
-    const instSource = ctx.createMediaElementSource(instRef.current);
+    const instSource  = ctx.createMediaElementSource(instRef.current);
     const vocalSource = ctx.createMediaElementSource(vocalsRef.current);
 
     const vocalGain = ctx.createGain();
-    vocalGain.gain.value = 0; // default: karaoke mode OFF means vocals ON... wait
-    // Actually default is normal mode (vocals audible)
     vocalGain.gain.value = 1;
     vocalsGainRef.current = vocalGain;
 
@@ -72,9 +78,12 @@ export function useKaraokeAudio(song: Song | null) {
     setAnalyser(analyserNode);
   }, []);
 
-  // Load song into both audio elements
   const loadSong = useCallback((s: Song) => {
     if (!instRef.current || !vocalsRef.current) return;
+    // Same song already loaded — don't reset playback position
+    if (loadedSongIdRef.current === s.id) return;
+    loadedSongIdRef.current = s.id;
+
     ctxInitialized.current = false;
     ctxRef.current?.close();
     ctxRef.current = null;
@@ -83,45 +92,14 @@ export function useKaraokeAudio(song: Song | null) {
 
     const hasDual = !!s.instrumental_filename && !!s.vocals_filename;
 
-    if (hasDual) {
-      instRef.current.src = getInstrumentalUrl(s);
-      vocalsRef.current.src = getVocalsUrl(s);
-    } else {
-      // Not yet processed — play original on instrumental track, silence vocals
-      instRef.current.src = getOriginalUrl(s);
-      vocalsRef.current.src = '';
-    }
+    instRef.current.src = hasDual ? getInstrumentalUrl(s) : getOriginalUrl(s);
+    vocalsRef.current.src = hasDual ? getVocalsUrl(s) : '';
 
     instRef.current.load();
     if (hasDual) vocalsRef.current.load();
 
-    setState((prev) => ({
-      ...prev,
-      currentTime: 0,
-      duration: 0,
-      isPlaying: false,
-      karaokeMode: false,
-    }));
+    setState({ isPlaying: false, currentTime: 0, duration: 0, karaokeMode: false, speed: 1 });
   }, []);
-
-  const play = useCallback(async () => {
-    const inst = instRef.current;
-    const vocals = vocalsRef.current;
-    if (!inst) return;
-
-    initAudioContext();
-    await ctxRef.current?.resume();
-
-    // Keep vocals in sync
-    if (vocals && vocals.src) {
-      vocals.currentTime = inst.currentTime;
-      vocals.playbackRate = inst.playbackRate;
-    }
-
-    await inst.play();
-    if (vocals && vocals.src) vocals.play().catch(() => {});
-    setState((prev) => ({ ...prev, isPlaying: true }));
-  }, [initAudioContext]);
 
   const pause = useCallback(() => {
     instRef.current?.pause();
@@ -129,17 +107,73 @@ export function useKaraokeAudio(song: Song | null) {
     setState((prev) => ({ ...prev, isPlaying: false }));
   }, []);
 
+  const play = useCallback(async () => {
+    const inst   = instRef.current;
+    const vocals = vocalsRef.current;
+    if (!inst) return;
+
+    initAudioContext();
+    await ctxRef.current?.resume();
+
+    // Sync vocals to the exact current position before resuming
+    if (vocals?.src) {
+      vocals.currentTime  = inst.currentTime;
+      vocals.playbackRate = inst.playbackRate;
+    }
+
+    await inst.play();
+    if (vocals?.src) vocals.play().catch(() => {});
+
+    setState((prev) => ({ ...prev, isPlaying: true }));
+  }, [initAudioContext]);
+
   const togglePlay = useCallback(() => {
-    if (state.isPlaying) pause();
-    else play();
+    if (state.isPlaying) pause(); else play();
   }, [state.isPlaying, play, pause]);
 
   const seek = useCallback((time: number) => {
-    if (instRef.current) instRef.current.currentTime = time;
-    if (vocalsRef.current && vocalsRef.current.src) {
-      vocalsRef.current.currentTime = time;
+    const inst   = instRef.current;
+    const vocals = vocalsRef.current;
+    if (!inst) return;
+
+    const wasPlaying = !inst.paused;
+
+    // ── 1. Pause both tracks immediately ─────────────────────────────────────
+    inst.pause();
+    if (vocals?.src) vocals.pause();
+
+    // ── 2. Update UI state right away so lyrics snap + slider stays put ──────
+    setState((prev) => ({ ...prev, currentTime: time, isPlaying: false }));
+
+    // ── 3. Apply the seek to both elements ───────────────────────────────────
+    inst.currentTime = time;
+    if (vocals?.src) vocals.currentTime = time;
+
+    // ── 4. If we were playing, resume after the browser confirms the seek ────
+    if (wasPlaying) {
+      // Remove any leftover listener from a previous rapid drag
+      if (pendingSeekRef.current) {
+        inst.removeEventListener('seeked', pendingSeekRef.current);
+        pendingSeekRef.current = null;
+      }
+
+      const onSeeked = () => {
+        inst.removeEventListener('seeked', onSeeked);
+        pendingSeekRef.current = null;
+
+        inst.play().then(() => {
+          if (vocals?.src) {
+            // Re-sync vocals after seek is confirmed complete
+            vocals.currentTime = inst.currentTime;
+            vocals.play().catch(() => {});
+          }
+          setState((prev) => ({ ...prev, isPlaying: true }));
+        }).catch(() => {});
+      };
+
+      pendingSeekRef.current = onSeeked;
+      inst.addEventListener('seeked', onSeeked);
     }
-    setState((prev) => ({ ...prev, currentTime: time }));
   }, []);
 
   const setSpeed = useCallback((speed: number) => {
@@ -147,18 +181,14 @@ export function useKaraokeAudio(song: Song | null) {
       instRef.current.playbackRate = speed;
       (instRef.current as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = true;
     }
-    if (vocalsRef.current) {
-      vocalsRef.current.playbackRate = speed;
-    }
+    if (vocalsRef.current) vocalsRef.current.playbackRate = speed;
     setState((prev) => ({ ...prev, speed }));
   }, []);
 
   const toggleKaraokeMode = useCallback(() => {
     setState((prev) => {
       const next = !prev.karaokeMode;
-      if (vocalsGainRef.current) {
-        vocalsGainRef.current.gain.value = next ? 0 : 1;
-      }
+      if (vocalsGainRef.current) vocalsGainRef.current.gain.value = next ? 0 : 1;
       return { ...prev, karaokeMode: next };
     });
   }, []);
@@ -169,10 +199,7 @@ export function useKaraokeAudio(song: Song | null) {
   }, []);
 
   const onInstrumentalLoaded = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      duration: instRef.current?.duration || 0,
-    }));
+    setState((prev) => ({ ...prev, duration: instRef.current?.duration || 0 }));
   }, []);
 
   const onEnded = useCallback(() => {
@@ -181,19 +208,9 @@ export function useKaraokeAudio(song: Song | null) {
   }, []);
 
   return {
-    instRef,
-    vocalsRef,
-    state,
-    analyser,
-    play,
-    pause,
-    togglePlay,
-    seek,
-    setSpeed,
-    toggleKaraokeMode,
-    setVolume,
-    loadSong,
-    onInstrumentalLoaded,
-    onEnded,
+    instRef, vocalsRef, state, analyser,
+    play, pause, togglePlay, seek, setSpeed,
+    toggleKaraokeMode, setVolume, loadSong,
+    onInstrumentalLoaded, onEnded,
   };
 }

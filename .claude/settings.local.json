@@ -18,7 +18,9 @@
       "Bash(Get-Command ffmpeg *)",
       "Bash(Select-Object -ExpandProperty Source)",
       "PowerShell(Get-Command *)",
-      "PowerShell(Get-ChildItem *)"
+      "PowerShell(Get-ChildItem *)",
+      "Bash(Get-ChildItem -Recurse -Path \"C:\\\\Users\\\\Yarin Raziel\\\\Desktop\\\\general\\\\code\\\\Karaoke\\\\frontend\" -Filter \"*.tsx\" -o File)",
+      "Bash(Select-Object -First 50)"
     ]
   }
 }

@@ -1,14 +1,56 @@
 import asyncio
 import json
 import os
+import re
 import traceback
 from pathlib import Path
-from fastapi import APIRouter, BackgroundTasks, Form, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request
+from fastapi.responses import FileResponse, StreamingResponse
 from database import get_songs_col
 from models import doc_to_dict
 
 router = APIRouter(prefix="/songs", tags=["songs"])
+
+
+def _audio_response(path: Path, media_type: str, request: Request):
+    """Return a range-aware audio response so browsers can seek."""
+    file_size = path.stat().st_size
+    range_header = request.headers.get("Range")
+
+    if range_header:
+        m = re.match(r"bytes=(\d+)-(\d*)", range_header)
+        if not m:
+            raise HTTPException(status_code=416, detail="Invalid Range header")
+        start = int(m.group(1))
+        end = int(m.group(2)) if m.group(2) else file_size - 1
+        end = min(end, file_size - 1)
+        if start > end:
+            raise HTTPException(status_code=416, detail="Range not satisfiable")
+        length = end - start + 1
+
+        def _iter():
+            with open(path, "rb") as f:
+                f.seek(start)
+                remaining = length
+                while remaining > 0:
+                    chunk = f.read(min(64 * 1024, remaining))
+                    if not chunk:
+                        break
+                    remaining -= len(chunk)
+                    yield chunk
+
+        headers = {
+            "Content-Range": f"bytes {start}-{end}/{file_size}",
+            "Accept-Ranges": "bytes",
+            "Content-Length": str(length),
+        }
+        return StreamingResponse(_iter(), status_code=206, headers=headers, media_type=media_type)
+
+    return FileResponse(
+        str(path),
+        media_type=media_type,
+        headers={"Accept-Ranges": "bytes"},
+    )
 
 SONGS_DIR = Path(os.environ.get("SONGS_DIR", "../songs"))
 
@@ -75,7 +117,7 @@ async def delete_song(song_id: str):
 
 
 @router.get("/{song_id}/stream/original")
-async def stream_original(song_id: str):
+async def stream_original(song_id: str, request: Request):
     col = get_songs_col()
     doc = await col.find_one({"_id": song_id})
     if not doc:
@@ -83,11 +125,11 @@ async def stream_original(song_id: str):
     path = SONGS_DIR / doc["original_filename"]
     if not path.exists():
         raise HTTPException(status_code=404, detail="Audio file missing")
-    return FileResponse(str(path), media_type="audio/mpeg")
+    return _audio_response(path, "audio/mpeg", request)
 
 
 @router.get("/{song_id}/stream/instrumental")
-async def stream_instrumental(song_id: str):
+async def stream_instrumental(song_id: str, request: Request):
     col = get_songs_col()
     doc = await col.find_one({"_id": song_id})
     if not doc:
@@ -97,11 +139,11 @@ async def stream_instrumental(song_id: str):
     path = SONGS_DIR / doc["instrumental_filename"]
     if not path.exists():
         raise HTTPException(status_code=404, detail="Instrumental file missing")
-    return FileResponse(str(path), media_type="audio/wav")
+    return _audio_response(path, "audio/wav", request)
 
 
 @router.get("/{song_id}/stream/vocals")
-async def stream_vocals(song_id: str):
+async def stream_vocals(song_id: str, request: Request):
     col = get_songs_col()
     doc = await col.find_one({"_id": song_id})
     if not doc:
@@ -111,7 +153,7 @@ async def stream_vocals(song_id: str):
     path = SONGS_DIR / doc["vocals_filename"]
     if not path.exists():
         raise HTTPException(status_code=404, detail="Vocals file missing")
-    return FileResponse(str(path), media_type="audio/wav")
+    return _audio_response(path, "audio/wav", request)
 
 
 # ── background task ───────────────────────────────────────────────────────────
