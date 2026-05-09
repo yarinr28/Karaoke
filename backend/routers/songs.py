@@ -72,6 +72,14 @@ def _audio_response(path: Path, media_type: str, request: Request, download_name
 
 SONGS_DIR = Path(os.environ.get("SONGS_DIR", "../songs"))
 
+
+def _file_base(doc: dict) -> str:
+    """Return '{Artist}_{Title}' (or just '{Title}' when artist is absent)."""
+    artist = sanitize_filename(doc.get("artist") or "")
+    title = sanitize_filename(doc.get("title") or "Unknown") or "Unknown"
+    return f"{artist}_{title}" if artist else title
+
+
 _EXT_TO_MIME: dict[str, str] = {
     ".mp3":  "audio/mpeg",
     ".wav":  "audio/wav",
@@ -203,7 +211,7 @@ async def stream_original(song_id: str, request: Request):
     if not path.exists():
         raise HTTPException(status_code=404, detail="Audio file missing")
     ext = path.suffix
-    download_name = f"{sanitize_filename(doc['title'])}_Original{ext}"
+    download_name = f"{_file_base(doc)}_Original{ext}"
     return _audio_response(path, _EXT_TO_MIME.get(ext.lower(), "audio/mpeg"), request, download_name)
 
 
@@ -218,7 +226,7 @@ async def stream_instrumental(song_id: str, request: Request):
     path = SONGS_DIR / doc["instrumental_filename"]
     if not path.exists():
         raise HTTPException(status_code=404, detail="Instrumental file missing")
-    download_name = f"{sanitize_filename(doc['title'])}_Instrumental{path.suffix}"
+    download_name = f"{_file_base(doc)}_Instrumental{path.suffix}"
     return _audio_response(path, "audio/wav", request, download_name)
 
 
@@ -233,7 +241,7 @@ async def stream_vocals(song_id: str, request: Request):
     path = SONGS_DIR / doc["vocals_filename"]
     if not path.exists():
         raise HTTPException(status_code=404, detail="Vocals file missing")
-    download_name = f"{sanitize_filename(doc['title'])}_Vocals{path.suffix}"
+    download_name = f"{_file_base(doc)}_Vocals{path.suffix}"
     return _audio_response(path, "audio/wav", request, download_name)
 
 

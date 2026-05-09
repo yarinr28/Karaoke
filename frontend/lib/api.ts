@@ -30,11 +30,15 @@ export async function uploadSong(
   file: File,
   lyrics: string,
   onProgress?: (pct: number) => void,
+  title?: string,
+  artist?: string,
 ): Promise<Song> {
   return new Promise((resolve, reject) => {
     const fd = new FormData();
     fd.append('file', file);
     if (lyrics.trim()) fd.append('lyrics', lyrics.trim());
+    if (title?.trim()) fd.append('title', title.trim());
+    if (artist?.trim()) fd.append('artist', artist.trim());
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `${BASE}/upload`);
     xhr.upload.onprogress = (e) => {
