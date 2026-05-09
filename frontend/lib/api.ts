@@ -54,6 +54,45 @@ export async function uploadSong(
   });
 }
 
+export async function uploadManual(
+  original: File,
+  instrumental: File,
+  title: string,
+  artist: string,
+  metadataJson: string,
+  vocals?: File | null,
+  onProgress?: (pct: number) => void,
+): Promise<Song> {
+  return new Promise((resolve, reject) => {
+    const fd = new FormData();
+    fd.append('original', original);
+    fd.append('instrumental', instrumental);
+    if (vocals) fd.append('vocals', vocals);
+    fd.append('title', title);
+    fd.append('artist', artist);
+    if (metadataJson.trim()) fd.append('metadata_json', metadataJson.trim());
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${BASE}/upload/manual`);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress)
+        onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status < 300) {
+        resolve(JSON.parse(xhr.responseText));
+      } else {
+        try {
+          reject(new Error(JSON.parse(xhr.responseText).detail || xhr.responseText));
+        } catch {
+          reject(new Error(xhr.responseText));
+        }
+      }
+    };
+    xhr.onerror = () => reject(new Error('Upload failed'));
+    xhr.send(fd);
+  });
+}
+
 export async function deleteSong(id: string): Promise<void> {
   await fetch(`${BASE}/songs/${id}`, { method: 'DELETE' });
 }
