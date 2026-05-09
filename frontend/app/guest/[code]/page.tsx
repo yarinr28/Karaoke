@@ -55,7 +55,7 @@ export default function GuestPage() {
     return (
       <div
         className="flex items-center justify-center h-screen"
-        style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 40%, #0d0820 0%, #030308 70%)' }}
+        style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 40%, var(--player-bg2) 0%, var(--color-bg) 70%)' }}
       >
         <div className="text-center">
           <div className="text-6xl mb-4 opacity-40">🎤</div>
@@ -68,20 +68,20 @@ export default function GuestPage() {
   return (
     <div
       className="flex flex-col h-screen overflow-hidden"
-      style={{ background: '#030308' }}
+      style={{ background: 'var(--color-bg)' }}
     >
       {/* Now playing banner */}
       {currentItem && (
         <div
           className="px-4 py-3 shrink-0"
           style={{
-            background: 'rgba(168,85,247,0.05)',
-            borderBottom: '1px solid rgba(168,85,247,0.12)',
+            background: 'rgba(var(--accent-rgb),0.05)',
+            borderBottom: '1px solid rgba(var(--accent-rgb),0.12)',
           }}
         >
           <p
             className="text-[10px] font-bold uppercase tracking-widest mb-0.5"
-            style={{ color: '#a855f7', textShadow: '0 0 10px rgba(168,85,247,0.4)' }}
+            style={{ color: 'var(--accent)', textShadow: '0 0 10px rgba(var(--accent-rgb),0.4)' }}
           >
             ♪ Now Playing
           </p>
@@ -91,15 +91,15 @@ export default function GuestPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="flex shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
         {(['browse', 'queue'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className="flex-1 py-3 text-sm font-medium capitalize transition-colors"
             style={{
-              color: tab === t ? '#a855f7' : 'rgba(255,255,255,0.4)',
-              borderBottom: tab === t ? '2px solid #00ff87' : '2px solid transparent',
+              color: tab === t ? 'var(--accent)' : 'var(--color-text-dim)',
+              borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
             }}
           >
             {t === 'queue' ? `Queue${queue.length > 0 ? ` (${queue.length})` : ''}` : 'Browse'}
@@ -122,9 +122,10 @@ export default function GuestPage() {
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl text-sm text-white placeholder:text-text-dim"
                 style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.09)',
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
                   outline: 'none',
+                  color: 'var(--color-text)',
                 }}
               />
             </div>
@@ -138,7 +139,7 @@ export default function GuestPage() {
               <div
                 key={song.id}
                 className="flex items-center gap-3 px-4 py-3.5 rounded-xl"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
               >
                 <div className="flex-1 min-w-0">
                   <p dir="auto" className="text-sm font-medium text-white truncate" style={{ unicodeBidi: 'plaintext' }}>{song.title}</p>
@@ -149,9 +150,9 @@ export default function GuestPage() {
                   onClick={() => handleAdd(song)}
                   className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 press-effect transition-all"
                   style={{
-                    background: 'rgba(168,85,247,0.15)',
-                    border: '1px solid rgba(168,85,247,0.3)',
-                    color: '#a855f7',
+                    background: 'rgba(var(--accent-rgb),0.15)',
+                    border: '1px solid rgba(var(--accent-rgb),0.3)',
+                    color: 'var(--accent)',
                   }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -174,7 +175,7 @@ export default function GuestPage() {
               <div
                 key={item.id}
                 className="flex items-center gap-3 px-4 py-3.5 rounded-xl"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
               >
                 <span className="text-[11px] text-text-dim tabular-nums w-5 shrink-0">{idx + 1}</span>
                 <div className="flex-1 min-w-0">

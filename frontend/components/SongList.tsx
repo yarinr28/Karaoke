@@ -54,8 +54,8 @@ export default function SongList({ activeSongId, onSelect, onAddToQueue, onListC
     <>
       <div className="flex flex-col h-full overflow-hidden">
         {/* Header */}
-        <div className="px-4 pt-5 pb-4 shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <h1 className="text-xl font-black mb-4 tracking-tight" style={{ color: '#a855f7', textShadow: '0 0 20px rgba(168,85,247,0.4)' }}>
+        <div className="px-4 pt-5 pb-4 shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
+          <h1 className="text-xl font-black mb-4 tracking-tight" style={{ color: 'var(--accent)', textShadow: '0 0 20px rgba(var(--accent-rgb),0.4)' }}>
             Karaoke
           </h1>
           <div className="relative">
@@ -69,10 +69,10 @@ export default function SongList({ activeSongId, onSelect, onAddToQueue, onListC
               onChange={(e) => setQuery(e.target.value)}
               className="w-full pl-8 pr-3 py-2 rounded-lg text-sm text-white placeholder:text-text-dim outline-none transition-colors"
               style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
               }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(168,85,247,0.5)')}
+              onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.5)')}
               onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
             />
           </div>
@@ -106,8 +106,8 @@ export default function SongList({ activeSongId, onSelect, onAddToQueue, onListC
                   style={
                     isActive
                       ? {
-                          background: 'rgba(168,85,247,0.08)',
-                          boxShadow: 'inset 0 0 0 1px rgba(168,85,247,0.2)',
+                          background: 'rgba(var(--accent-rgb),0.08)',
+                          boxShadow: 'inset 0 0 0 1px rgba(var(--accent-rgb),0.2)',
                           cursor: 'pointer',
                         }
                       : canPlay
@@ -116,7 +116,7 @@ export default function SongList({ activeSongId, onSelect, onAddToQueue, onListC
                   }
                   onMouseEnter={(e) => {
                     if (!isActive && canPlay)
-                      (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)';
+                      (e.currentTarget as HTMLElement).style.background = 'var(--color-surface)';
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive)
@@ -126,14 +126,14 @@ export default function SongList({ activeSongId, onSelect, onAddToQueue, onListC
                   {/* Active indicator bar */}
                   <div
                     className="w-0.5 h-8 rounded-full shrink-0 transition-all duration-300"
-                    style={isActive ? { background: '#a855f7', boxShadow: '0 0 8px rgba(168,85,247,0.7)' } : { background: 'transparent' }}
+                    style={isActive ? { background: 'var(--accent)', boxShadow: '0 0 8px rgba(var(--accent-rgb),0.7)' } : { background: 'transparent' }}
                   />
 
                   <div className="flex-1 min-w-0">
                     <p
                       dir="auto"
                       className="text-sm truncate font-medium leading-tight"
-                      style={{ color: isActive ? '#a855f7' : '#ffffff', unicodeBidi: 'plaintext' }}
+                      style={{ color: isActive ? 'var(--accent)' : 'var(--color-text)', unicodeBidi: 'plaintext' }}
                     >
                       {song.title}
                     </p>
@@ -167,7 +167,7 @@ export default function SongList({ activeSongId, onSelect, onAddToQueue, onListC
                       <button
                         onClick={(e) => { e.stopPropagation(); onAddToQueue(song); }}
                         title="Add to queue"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-text-dim hover:text-accent-bright"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-text-dim hover-accent"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>

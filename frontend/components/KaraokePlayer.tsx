@@ -78,8 +78,8 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
         className="relative flex-1 overflow-hidden"
         style={{
           background: state.isPlaying
-            ? 'radial-gradient(ellipse 90% 70% at 50% 40%, #1a0535 0%, #08021a 55%, #030308 100%)'
-            : 'radial-gradient(ellipse 80% 60% at 50% 40%, #0d0820 0%, #030308 70%)',
+            ? 'radial-gradient(ellipse 90% 70% at 50% 40%, var(--player-bg1) 0%, var(--player-bg2) 55%, var(--color-bg) 100%)'
+            : 'radial-gradient(ellipse 80% 60% at 50% 40%, var(--player-bg2) 0%, var(--color-bg) 70%)',
           transition: 'background 1.5s ease',
         }}
       >
@@ -88,7 +88,7 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
         {!song ? (
           <div className="flex flex-col items-center justify-center h-full select-none pointer-events-none">
             <div className="text-7xl mb-5 opacity-20" style={{ filter: 'grayscale(1)' }}>🎤</div>
-            <p className="text-base text-text-dim">Select a song to start singing</p>
+            <p className="text-base" style={{ color: 'var(--color-text-dim)' }}>Select a song to start singing</p>
           </div>
         ) : (
           <LyricsRenderer
@@ -104,9 +104,9 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
       <footer
         className="shrink-0"
         style={{
-          background: 'rgba(3,3,8,0.88)',
+          background: 'var(--color-footer)',
           backdropFilter: 'blur(32px)',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
+          borderTop: '1px solid var(--color-border)',
         }}
       >
         {/* Row 1: seek bar + times */}
@@ -140,13 +140,13 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
             className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 press-effect disabled:opacity-30 transition-all"
             style={song ? {
               background: state.isPlaying
-                ? 'rgba(168,85,247,0.15)'
-                : 'rgba(168,85,247,0.9)',
+                ? 'rgba(var(--accent-rgb), 0.15)'
+                : 'rgba(var(--accent-rgb), 0.9)',
               boxShadow: state.isPlaying
-                ? '0 0 0 1px rgba(168,85,247,0.4), 0 0 24px rgba(168,85,247,0.25)'
-                : '0 0 0 1px rgba(168,85,247,0.6), 0 0 32px rgba(168,85,247,0.5)',
-              color: state.isPlaying ? '#a855f7' : '#ffffff',
-            } : { background: 'rgba(255,255,255,0.08)', color: '#ffffff40' }}
+                ? '0 0 0 1px rgba(var(--accent-rgb), 0.4), 0 0 24px rgba(var(--accent-rgb), 0.25)'
+                : '0 0 0 1px rgba(var(--accent-rgb), 0.6), 0 0 32px rgba(var(--accent-rgb), 0.5)',
+              color: state.isPlaying ? 'var(--accent)' : '#ffffff',
+            } : { background: 'var(--color-surface)', color: 'var(--color-text-dim)' }}
           >
             {state.isPlaying ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -166,14 +166,14 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
             title={song?.instrumental_filename ? 'Toggle karaoke mode' : 'Process song first'}
             className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all press-effect shrink-0 disabled:opacity-30"
             style={state.karaokeMode ? {
-              background: 'rgba(0,180,255,0.15)',
-              border: '1px solid rgba(0,180,255,0.4)',
-              color: '#00b4ff',
-              boxShadow: '0 0 16px rgba(0,180,255,0.2)',
+              background: 'rgba(var(--accent-rgb), 0.12)',
+              border: '1px solid rgba(var(--accent-rgb), 0.4)',
+              color: 'var(--accent)',
+              boxShadow: '0 0 16px rgba(var(--accent-rgb), 0.2)',
             } : {
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: 'rgba(255,255,255,0.5)',
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text-dim)',
             }}
           >
             🎙 Karaoke
@@ -186,10 +186,10 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
               value={state.speed}
               onChange={(e) => setSpeed(parseFloat(e.target.value))}
               className="rounded-md text-xs text-white px-1.5 py-1 outline-none"
-              style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+              style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
             >
               {[0.75, 1, 1.25, 1.5].map((s) => (
-                <option key={s} value={s} style={{ background: '#0d0d1a', color: '#ffffff' }}>{s}x</option>
+                <option key={s} value={s} style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}>{s}x</option>
               ))}
             </select>
           </div>

@@ -5,6 +5,7 @@ import KaraokePlayer from '@/components/KaraokePlayer';
 import SongList from '@/components/SongList';
 import FileUpload from '@/components/FileUpload';
 import Queue from '@/components/Queue';
+import ThemeModal from '@/components/ThemeModal';
 import { useQueueSocket } from '@/hooks/useWebSocket';
 import { fetchSong } from '@/lib/api';
 
@@ -12,6 +13,7 @@ export default function HostPage() {
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [allSongs, setAllSongs] = useState<Song[]>([]);
   const [showCode, setShowCode] = useState(false);
+  const [showTheme, setShowTheme] = useState(false);
   const ws = useQueueSocket();
 
   useEffect(() => {
@@ -57,7 +59,7 @@ export default function HostPage() {
       style={{ gridTemplateColumns: '280px 1fr 280px' }}
     >
       {/* ── Left: Song library ─────────────────────────────────── */}
-      <aside className="flex flex-col overflow-hidden" style={{ background: 'rgba(5,5,12,0.96)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+      <aside className="flex flex-col overflow-hidden" style={{ background: 'var(--color-sidebar)', borderRight: '1px solid var(--color-border)' }}>
         <SongList
           activeSongId={currentSong?.id || null}
           onSelect={handleSelect}
@@ -70,6 +72,21 @@ export default function HostPage() {
       {/* ── Center: Player ─────────────────────────────────────── */}
       <main className="flex flex-col overflow-hidden relative bg-player">
         <KaraokePlayer song={currentSong} onEnded={handleEnded} />
+
+        {/* Theme button */}
+        <button
+          onClick={() => setShowTheme(true)}
+          className="absolute top-4 left-4 z-20 glass flex items-center justify-center w-9 h-9 rounded-xl press-effect transition-colors"
+          title="Appearance"
+          style={{ color: 'var(--color-text-dim)' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text-dim)')}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+          </svg>
+        </button>
 
         {/* Session code badge */}
         {ws.sessionCode && (
@@ -90,14 +107,14 @@ export default function HostPage() {
             {showCode && (
               <div className="glass-strong absolute right-0 top-12 rounded-2xl p-5 shadow-2xl min-w-[220px] animate-scale-in">
                 <p className="text-[10px] text-text-dim uppercase tracking-widest mb-2">Guest link</p>
-                <p className="font-mono text-4xl font-black text-center text-accent-bright tracking-[0.15em] mb-4"
-                   style={{ textShadow: '0 0 20px rgba(0,255,135,0.5)' }}>
+                <p className="font-mono text-4xl font-black text-center tracking-[0.15em] mb-4"
+                   style={{ color: 'var(--accent)', textShadow: '0 0 20px rgba(var(--accent-rgb), 0.5)' }}>
                   {ws.sessionCode}
                 </p>
                 <button
                   onClick={() => navigator.clipboard.writeText(guestUrl)}
                   className="w-full text-xs rounded-lg px-3 py-2 font-medium transition-colors press-effect"
-                  style={{ background: 'rgba(0,255,135,0.1)', border: '1px solid rgba(0,255,135,0.25)', color: '#00ff87' }}
+                  style={{ background: 'rgba(var(--accent-rgb), 0.1)', border: '1px solid rgba(var(--accent-rgb), 0.25)', color: 'var(--accent)' }}
                 >
                   Copy Link
                 </button>
@@ -107,8 +124,10 @@ export default function HostPage() {
         )}
       </main>
 
+      {showTheme && <ThemeModal onClose={() => setShowTheme(false)} />}
+
       {/* ── Right: Queue ───────────────────────────────────────── */}
-      <aside className="flex flex-col overflow-hidden" style={{ background: 'rgba(5,5,12,0.96)', borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
+      <aside className="flex flex-col overflow-hidden" style={{ background: 'var(--color-sidebar)', borderLeft: '1px solid var(--color-border)' }}>
         <Queue
           queue={ws.session?.queue || []}
           currentItem={ws.session?.current_item || null}

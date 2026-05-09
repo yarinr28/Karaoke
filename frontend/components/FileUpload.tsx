@@ -16,10 +16,10 @@ function titleFromFilename(filename: string): string {
 }
 
 const inputStyle = {
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.1)',
+  background: 'var(--color-surface)',
+  border: '1px solid var(--color-border)',
   borderRadius: '10px',
-  color: '#ffffff',
+  color: 'var(--color-text)',
   outline: 'none',
 };
 
@@ -79,22 +79,22 @@ export default function FileUpload({ onUploaded }: Props) {
   return (
     <>
       {/* Sidebar trigger */}
-      <div className="p-3 shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="p-3 shrink-0" style={{ borderTop: '1px solid var(--color-border)' }}>
         <button
           onClick={() => setOpen(true)}
           className="w-full py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-2 transition-all press-effect"
           style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.09)',
-            color: 'rgba(255,255,255,0.5)',
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-text-dim)',
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(168,85,247,0.3)';
-            (e.currentTarget as HTMLElement).style.color = '#ffffff';
+            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(var(--accent-rgb),0.3)';
+            (e.currentTarget as HTMLElement).style.color = 'var(--color-text)';
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.09)';
-            (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.5)';
+            (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)';
+            (e.currentTarget as HTMLElement).style.color = 'var(--color-text-dim)';
           }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -115,14 +115,14 @@ export default function FileUpload({ onUploaded }: Props) {
           <div
             className="w-full max-w-md mx-4 rounded-2xl shadow-2xl animate-scale-in"
             style={{
-              background: 'rgba(10,8,20,0.92)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'var(--modal-bg)',
+              border: '1px solid var(--color-border)',
               backdropFilter: 'blur(40px)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: '1px solid var(--color-border)' }}>
               <h2 className="text-sm font-semibold text-white">Upload Song</h2>
               <button onClick={close} className="text-text-dim hover:text-white text-lg leading-none transition-colors">×</button>
             </div>
@@ -141,8 +141,8 @@ export default function FileUpload({ onUploaded }: Props) {
                 onClick={() => !file && inputRef.current?.click()}
                 className="rounded-xl px-4 py-5 text-center transition-all"
                 style={{
-                  border: `2px dashed ${dragging ? 'rgba(168,85,247,0.5)' : file ? 'rgba(168,85,247,0.25)' : 'rgba(255,255,255,0.12)'}`,
-                  background: dragging ? 'rgba(168,85,247,0.04)' : 'transparent',
+                  border: `2px dashed ${dragging ? 'rgba(var(--accent-rgb),0.5)' : file ? 'rgba(var(--accent-rgb),0.25)' : 'var(--color-border)'}`,
+                  background: dragging ? 'rgba(var(--accent-rgb),0.04)' : 'transparent',
                   cursor: file ? 'default' : 'pointer',
                 }}
               >
@@ -156,7 +156,7 @@ export default function FileUpload({ onUploaded }: Props) {
                 {file ? (
                   <div className="flex items-center justify-center gap-2">
                     <span className="text-base">🎵</span>
-                    <span className="text-xs truncate max-w-[240px]" style={{ color: '#a855f7' }}>{file.name}</span>
+                    <span className="text-xs truncate max-w-[240px]" style={{ color: 'var(--accent)' }}>{file.name}</span>
                     <button
                       onClick={(e) => { e.stopPropagation(); reset(); }}
                       className="text-text-dim hover:text-white text-sm leading-none ml-1"
@@ -166,7 +166,7 @@ export default function FileUpload({ onUploaded }: Props) {
                   <>
                     <div className="text-3xl mb-1.5 opacity-30">📂</div>
                     <p className="text-xs text-text-dim">
-                      Drop audio file or <span style={{ color: '#a855f7' }}>browse</span>
+                      Drop audio file or <span style={{ color: 'var(--accent)' }}>browse</span>
                     </p>
                     <p className="text-[10px] text-text-dim/50 mt-0.5">MP3 · WAV · OGG · FLAC · M4A · AAC</p>
                   </>
@@ -186,8 +186,8 @@ export default function FileUpload({ onUploaded }: Props) {
                   placeholder="Enter song title"
                   className="w-full px-3 py-2 text-sm placeholder:text-text-dim/50"
                   style={inputStyle}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(168,85,247,0.35)')}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.35)')}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--color-border)')}
                 />
               </div>
 
@@ -204,8 +204,8 @@ export default function FileUpload({ onUploaded }: Props) {
                   placeholder="Enter artist name"
                   className="w-full px-3 py-2 text-sm placeholder:text-text-dim/50"
                   style={inputStyle}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(168,85,247,0.35)')}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.35)')}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--color-border)')}
                 />
               </div>
 
@@ -221,9 +221,9 @@ export default function FileUpload({ onUploaded }: Props) {
                   onChange={(e) => setLyrics(e.target.value)}
                   placeholder={"Paste lyrics here…\nThe AI will sync timestamps to your exact words."}
                   className="w-full px-3 py-2 text-xs font-mono leading-relaxed resize-none placeholder:text-text-dim/40"
-                  style={{ ...inputStyle, color: 'rgba(255,255,255,0.85)' }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(168,85,247,0.35)')}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+                  style={{ ...inputStyle, color: 'var(--color-text)' }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.35)')}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--color-border)')}
                 />
               </div>
 
@@ -231,10 +231,10 @@ export default function FileUpload({ onUploaded }: Props) {
               {progress !== null && (
                 <div>
                   <p className="text-xs text-text-dim mb-1.5">Uploading…</p>
-                  <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                  <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--color-surface)' }}>
                     <div
                       className="h-full rounded-full transition-all"
-                      style={{ width: `${progress}%`, background: '#a855f7', boxShadow: '0 0 10px rgba(168,85,247,0.5)' }}
+                      style={{ width: `${progress}%`, background: 'var(--accent)', boxShadow: '0 0 10px rgba(var(--accent-rgb),0.5)' }}
                     />
                   </div>
                 </div>
@@ -248,7 +248,7 @@ export default function FileUpload({ onUploaded }: Props) {
                   onClick={close}
                   disabled={progress !== null}
                   className="flex-1 py-2 rounded-xl text-sm text-text-dim hover:text-white transition-colors disabled:opacity-40"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
                 >
                   Cancel
                 </button>
@@ -256,7 +256,7 @@ export default function FileUpload({ onUploaded }: Props) {
                   onClick={submit}
                   disabled={!canSubmit}
                   className="flex-1 py-2 rounded-xl text-sm font-semibold transition-all press-effect disabled:opacity-40"
-                  style={{ background: canSubmit ? 'rgba(168,85,247,0.9)' : 'rgba(255,255,255,0.1)', color: canSubmit ? '#030308' : 'rgba(255,255,255,0.4)' }}
+                  style={{ background: canSubmit ? 'rgba(var(--accent-rgb),0.9)' : 'var(--color-surface)', color: canSubmit ? '#030308' : 'var(--color-text-dim)' }}
                 >
                   {progress !== null ? 'Uploading…' : 'Upload & Process'}
                 </button>

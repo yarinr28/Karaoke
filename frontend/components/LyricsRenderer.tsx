@@ -59,7 +59,7 @@ const LyricsRenderer = memo(function LyricsRenderer({ lines, currentTime, isRTL,
     return (
       <div className="flex flex-col items-center justify-center h-full select-none">
         <div className="text-7xl mb-5 opacity-20" style={{ filter: 'grayscale(1)' }}>🎤</div>
-        <p className="text-base text-text-dim">No lyrics available yet</p>
+        <p className="text-base" style={{ color: 'var(--color-text-dim)' }}>No lyrics available yet</p>
       </div>
     );
   }
@@ -111,13 +111,15 @@ const LyricsRenderer = memo(function LyricsRenderer({ lines, currentTime, isRTL,
                     unicodeBidi: 'isolate',
                     // Color: active word pops in purple, past words white, future words dimmed
                     color: isActive
-                      ? '#a855f7'
+                      ? 'var(--accent)'
                       : isActiveLine
-                      ? isPastWord ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.38)'
-                      : '#ffffff',
+                      ? isPastWord
+                        ? `rgba(var(--color-text-rgb), 0.9)`
+                        : `rgba(var(--color-text-rgb), 0.35)`
+                      : `rgba(var(--color-text-rgb), 0.85)`,
                     // Glow only on active word
                     textShadow: isActive
-                      ? '0 0 18px rgba(168,85,247,0.95), 0 0 40px rgba(168,85,247,0.5), 0 0 70px rgba(168,85,247,0.2)'
+                      ? '0 0 18px rgba(var(--accent-rgb), 0.95), 0 0 40px rgba(var(--accent-rgb), 0.5), 0 0 70px rgba(var(--accent-rgb), 0.2)'
                       : 'none',
                     // Scale up the active word for the pop effect
                     transform: isActive ? 'scale(1.18)' : 'scale(1)',

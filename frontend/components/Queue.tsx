@@ -38,7 +38,7 @@ export default function Queue({ queue, currentItem, onRemove, onReorder, onNext 
       {/* Header */}
       <div
         className="flex items-center justify-between px-4 py-3.5 shrink-0"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ borderBottom: '1px solid var(--color-border)' }}
       >
         <h2 className="text-sm font-semibold text-white">Up Next</h2>
         {queue.length > 0 && (
@@ -59,13 +59,13 @@ export default function Queue({ queue, currentItem, onRemove, onReorder, onNext 
         <div
           className="px-4 py-3 shrink-0"
           style={{
-            background: 'rgba(168,85,247,0.05)',
-            borderBottom: '1px solid rgba(168,85,247,0.12)',
+            background: 'rgba(var(--accent-rgb),0.05)',
+            borderBottom: '1px solid rgba(var(--accent-rgb),0.12)',
           }}
         >
           <p
             className="text-[10px] font-bold uppercase tracking-widest mb-1"
-            style={{ color: '#a855f7', textShadow: '0 0 10px rgba(168,85,247,0.5)' }}
+            style={{ color: 'var(--accent)', textShadow: '0 0 10px rgba(var(--accent-rgb),0.5)' }}
           >
             ♪ Now Playing
           </p>
@@ -92,12 +92,12 @@ export default function Queue({ queue, currentItem, onRemove, onReorder, onNext 
               className="flex items-center gap-2.5 px-3 py-2.5 mx-2 rounded-xl group transition-all duration-150"
               style={{
                 cursor: 'grab',
-                background: dragOverId === item.id ? 'rgba(168,85,247,0.07)' : undefined,
-                boxShadow: dragOverId === item.id ? 'inset 0 0 0 1px rgba(168,85,247,0.2)' : undefined,
+                background: dragOverId === item.id ? 'rgba(var(--accent-rgb),0.07)' : undefined,
+                boxShadow: dragOverId === item.id ? 'inset 0 0 0 1px rgba(var(--accent-rgb),0.2)' : undefined,
               }}
               onMouseEnter={(e) => {
                 if (dragOverId !== item.id)
-                  (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)';
+                  (e.currentTarget as HTMLElement).style.background = 'var(--color-surface)';
               }}
               onMouseLeave={(e) => {
                 if (dragOverId !== item.id)
@@ -107,7 +107,7 @@ export default function Queue({ queue, currentItem, onRemove, onReorder, onNext 
               {/* Drag handle + number */}
               <div className="flex flex-col items-center gap-0.5 shrink-0 w-5">
                 <span className="text-[10px] text-text-dim tabular-nums">{idx + 1}</span>
-                <svg width="10" height="10" viewBox="0 0 20 20" fill="rgba(255,255,255,0.2)">
+                <svg width="10" height="10" viewBox="0 0 20 20" fill="var(--color-text-dim)">
                   <circle cx="6" cy="6" r="1.5"/><circle cx="14" cy="6" r="1.5"/>
                   <circle cx="6" cy="10" r="1.5"/><circle cx="14" cy="10" r="1.5"/>
                   <circle cx="6" cy="14" r="1.5"/><circle cx="14" cy="14" r="1.5"/>

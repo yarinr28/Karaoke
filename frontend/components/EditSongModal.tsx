@@ -16,10 +16,10 @@ function lyricsToText(song: Song): string {
 }
 
 const inputStyle = {
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.1)',
+  background: 'var(--color-surface)',
+  border: '1px solid var(--color-border)',
   borderRadius: '10px',
-  color: '#ffffff',
+  color: 'var(--color-text)',
   outline: 'none',
 };
 
@@ -62,14 +62,14 @@ export default function EditSongModal({ song, onClose, onSaved }: Props) {
       <div
         className="w-full max-w-md mx-4 rounded-2xl shadow-2xl animate-scale-in"
         style={{
-          background: 'rgba(10,8,20,0.92)',
-          border: '1px solid rgba(255,255,255,0.1)',
+          background: 'var(--modal-bg)',
+          border: '1px solid var(--color-border)',
           backdropFilter: 'blur(40px)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: '1px solid var(--color-border)' }}>
           <h2 className="text-sm font-semibold text-white">Edit Song</h2>
           <button onClick={onClose} className="text-text-dim hover:text-white text-lg leading-none transition-colors">×</button>
         </div>
@@ -84,8 +84,8 @@ export default function EditSongModal({ song, onClose, onSaved }: Props) {
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3 py-2 text-sm"
               style={inputStyle}
-              onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(168,85,247,0.35)')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+              onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.35)')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--color-border)')}
             />
           </div>
 
@@ -98,8 +98,8 @@ export default function EditSongModal({ song, onClose, onSaved }: Props) {
               onChange={(e) => setArtist(e.target.value)}
               className="w-full px-3 py-2 text-sm"
               style={inputStyle}
-              onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(168,85,247,0.35)')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+              onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.35)')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--color-border)')}
             />
           </div>
 
@@ -113,9 +113,9 @@ export default function EditSongModal({ song, onClose, onSaved }: Props) {
               value={lyrics}
               onChange={(e) => setLyrics(e.target.value)}
               className="w-full px-3 py-2 text-xs font-mono leading-relaxed resize-none"
-              style={{ ...inputStyle, color: 'rgba(255,255,255,0.85)' }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(168,85,247,0.35)')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+              style={{ ...inputStyle, color: 'var(--color-text)' }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(var(--accent-rgb),0.35)')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--color-border)')}
             />
           </div>
 
@@ -123,7 +123,7 @@ export default function EditSongModal({ song, onClose, onSaved }: Props) {
             <button
               onClick={onClose}
               className="flex-1 py-2 rounded-xl text-sm text-text-dim hover:text-white transition-colors"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+              style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
             >
               Cancel
             </button>
@@ -131,7 +131,7 @@ export default function EditSongModal({ song, onClose, onSaved }: Props) {
               onClick={handleSave}
               disabled={saving || !title.trim()}
               className="flex-1 py-2 rounded-xl text-sm font-semibold text-white transition-all press-effect disabled:opacity-40 flex items-center justify-center gap-2"
-              style={{ background: 'rgba(168,85,247,0.9)', color: '#030308' }}
+              style={{ background: 'rgba(var(--accent-rgb),0.9)', color: '#030308' }}
             >
               {saving ? (
                 <>
