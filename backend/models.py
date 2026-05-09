@@ -1,4 +1,5 @@
 import re
+import unicodedata
 import uuid
 import json
 from datetime import datetime, timezone
@@ -7,10 +8,15 @@ from typing import Optional, List
 
 
 def sanitize_filename(title: str) -> str:
-    """Convert a song title to a safe, readable filename component.
+    """Convert a song title to an ASCII-safe, readable filename component.
     'Learn to Fly' → 'Learn_to_Fly'
+    'רולקס וקסקט'  → 'Unknown'  (non-ASCII stripped; no ASCII letters remain)
     """
-    s = title.strip().replace(" ", "_")
+    # Decompose accented letters so é → e + combining accent, then drop the accent
+    s = unicodedata.normalize("NFKD", title.strip())
+    # Keep only ASCII characters after decomposition
+    s = s.encode("ascii", "ignore").decode()
+    s = s.replace(" ", "_")
     s = re.sub(r"[^\w\-]", "", s)   # keep alphanumeric, underscore, hyphen
     s = re.sub(r"_+", "_", s)       # collapse multiple underscores
     s = s.strip("_")

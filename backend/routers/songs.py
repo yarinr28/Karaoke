@@ -5,6 +5,7 @@ import re
 import traceback
 from pathlib import Path
 from typing import Optional
+from urllib.parse import quote
 from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
@@ -14,12 +15,24 @@ from models import doc_to_dict, sanitize_filename
 router = APIRouter(prefix="/songs", tags=["songs"])
 
 
+def _content_disposition(name: str) -> str:
+    """Build a Content-Disposition header value that is safe for HTTP headers.
+    Uses RFC 5987 encoding so non-ASCII filenames (Hebrew, Arabic, …) never
+    cause uvicorn to throw a 500 while trying to encode the header.
+    """
+    ascii_name = name.encode("ascii", "ignore").decode() or "audio"
+    if name == ascii_name:
+        return f'inline; filename="{ascii_name}"'
+    # RFC 5987: provide both a plain ASCII fallback and the full UTF-8 value
+    return f"inline; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(name, safe='-_.~')}"
+
+
 def _audio_response(path: Path, media_type: str, request: Request, download_name: str | None = None):
     """Return a range-aware audio response so browsers can seek."""
     file_size = path.stat().st_size
     range_header = request.headers.get("Range")
 
-    disposition = f'inline; filename="{download_name or path.name}"'
+    disposition = _content_disposition(download_name or path.name)
 
     if range_header:
         m = re.match(r"bytes=(\d+)-(\d*)", range_header)
@@ -58,6 +71,16 @@ def _audio_response(path: Path, media_type: str, request: Request, download_name
     )
 
 SONGS_DIR = Path(os.environ.get("SONGS_DIR", "../songs"))
+
+_EXT_TO_MIME: dict[str, str] = {
+    ".mp3":  "audio/mpeg",
+    ".wav":  "audio/wav",
+    ".ogg":  "audio/ogg",
+    ".flac": "audio/flac",
+    ".m4a":  "audio/mp4",
+    ".aac":  "audio/aac",
+    ".webm": "audio/webm",
+}
 
 
 @router.get("")
@@ -181,7 +204,7 @@ async def stream_original(song_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Audio file missing")
     ext = path.suffix
     download_name = f"{sanitize_filename(doc['title'])}_Original{ext}"
-    return _audio_response(path, "audio/mpeg", request, download_name)
+    return _audio_response(path, _EXT_TO_MIME.get(ext.lower(), "audio/mpeg"), request, download_name)
 
 
 @router.get("/{song_id}/stream/instrumental")

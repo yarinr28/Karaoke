@@ -21,6 +21,8 @@ export function useKaraokeAudio(song: Song | null) {
   const ctxInitialized = useRef(false);
   // Prevent re-loading audio when parent re-renders with the same song object
   const loadedSongIdRef = useRef<string | null>(null);
+  // Whether the current song has separate instrumental + vocals stems
+  const hasDualRef      = useRef(false);
   // Pending seeked-listener cleanup (handles rapid drag on seek bar)
   const pendingSeekRef  = useRef<(() => void) | null>(null);
 
@@ -91,12 +93,21 @@ export function useKaraokeAudio(song: Song | null) {
     setAnalyser(null);
 
     const hasDual = !!s.instrumental_filename && !!s.vocals_filename;
+    hasDualRef.current = hasDual;
 
     instRef.current.src = hasDual ? getInstrumentalUrl(s) : getOriginalUrl(s);
-    vocalsRef.current.src = hasDual ? getVocalsUrl(s) : '';
-
     instRef.current.load();
-    if (hasDual) vocalsRef.current.load();
+
+    if (hasDual) {
+      vocalsRef.current.src = getVocalsUrl(s);
+      vocalsRef.current.load();
+    } else {
+      // removeAttribute + load() fully resets the element to HAVE_NOTHING state.
+      // Setting src='' does NOT clear the source — browsers resolve it as the
+      // current page URL, which causes the AudioContext to receive HTML data.
+      vocalsRef.current.removeAttribute('src');
+      vocalsRef.current.load();
+    }
 
     setState({ isPlaying: false, currentTime: 0, duration: 0, karaokeMode: false, speed: 1 });
   }, []);
@@ -116,13 +127,17 @@ export function useKaraokeAudio(song: Song | null) {
     await ctxRef.current?.resume();
 
     // Sync vocals to the exact current position before resuming
-    if (vocals?.src) {
+    if (hasDualRef.current && vocals) {
       vocals.currentTime  = inst.currentTime;
       vocals.playbackRate = inst.playbackRate;
     }
 
-    await inst.play();
-    if (vocals?.src) vocals.play().catch(() => {});
+    try {
+      await inst.play();
+    } catch {
+      return;
+    }
+    if (hasDualRef.current && vocals) vocals.play().catch(() => {});
 
     setState((prev) => ({ ...prev, isPlaying: true }));
   }, [initAudioContext]);
@@ -140,14 +155,14 @@ export function useKaraokeAudio(song: Song | null) {
 
     // ── 1. Pause both tracks immediately ─────────────────────────────────────
     inst.pause();
-    if (vocals?.src) vocals.pause();
+    if (hasDualRef.current && vocals) vocals.pause();
 
     // ── 2. Update UI state right away so lyrics snap + slider stays put ──────
     setState((prev) => ({ ...prev, currentTime: time, isPlaying: false }));
 
     // ── 3. Apply the seek to both elements ───────────────────────────────────
     inst.currentTime = time;
-    if (vocals?.src) vocals.currentTime = time;
+    if (hasDualRef.current && vocals) vocals.currentTime = time;
 
     // ── 4. If we were playing, resume after the browser confirms the seek ────
     if (wasPlaying) {
