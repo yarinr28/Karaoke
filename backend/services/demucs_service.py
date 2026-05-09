@@ -9,14 +9,18 @@ Audio saving uses the Python stdlib wave module (no extra DLL dependency).
 from pathlib import Path
 
 
-def separate(input_path: Path, output_dir: Path) -> tuple[Path, Path]:
+def separate(input_path: Path, output_dir: Path, title_base: str | None = None) -> tuple[Path, Path]:
     """
     Separate vocals from music in input_path.
     Returns (instrumental_path, vocals_path) as 44100 Hz stereo WAV files.
+
+    title_base: sanitized song title used for output filenames
+                (e.g. 'Learn_to_Fly' → 'Learn_to_Fly_Instrumental.wav').
+                Falls back to the input stem when not provided.
     """
-    stem = input_path.stem
-    instrumental_path = output_dir / f"{stem}_instrumental.wav"
-    vocals_path = output_dir / f"{stem}_vocals.wav"
+    base = title_base or input_path.stem
+    instrumental_path = output_dir / f"{base}_Instrumental.wav"
+    vocals_path = output_dir / f"{base}_Vocals.wav"
 
     if instrumental_path.exists() and vocals_path.exists():
         return instrumental_path, vocals_path

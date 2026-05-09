@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks
 import aiofiles
 from database import get_songs_col
-from models import new_song_doc, doc_to_dict
+from models import new_song_doc, doc_to_dict, sanitize_filename
 from routers.process import run_pipeline
 
 router = APIRouter(prefix="/upload", tags=["upload"])
@@ -25,10 +25,10 @@ async def upload_song(
 
     SONGS_DIR.mkdir(parents=True, exist_ok=True)
 
-    filename = f"{uuid.uuid4()}{ext}"
-    dest = SONGS_DIR / filename
+    # Save to a temp UUID path first so we can read metadata before naming
+    temp_path = SONGS_DIR / f"{uuid.uuid4()}{ext}"
 
-    async with aiofiles.open(dest, "wb") as f:
+    async with aiofiles.open(temp_path, "wb") as f:
         while chunk := await file.read(1024 * 1024):
             await f.write(chunk)
 
@@ -37,7 +37,7 @@ async def upload_song(
     duration = 0.0
     try:
         from mutagen import File as MFile
-        meta = MFile(str(dest))
+        meta = MFile(str(temp_path))
         if meta:
             if hasattr(meta, "tags") and meta.tags:
                 title = (
@@ -54,6 +54,16 @@ async def upload_song(
                 duration = getattr(meta.info, "length", 0.0) or 0.0
     except Exception:
         pass
+
+    # Rename to descriptive filename: {Song_Title}_Original.ext
+    sanitized = sanitize_filename(title)
+    filename = f"{sanitized}_Original{ext}"
+    dest = SONGS_DIR / filename
+    if dest.exists():
+        # Collision: two songs with the same title → append a short unique suffix
+        filename = f"{sanitized}_{str(uuid.uuid4())[:8]}_Original{ext}"
+        dest = SONGS_DIR / filename
+    temp_path.rename(dest)
 
     doc = new_song_doc(
         title=title,

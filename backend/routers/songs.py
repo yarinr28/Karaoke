@@ -9,15 +9,17 @@ from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from database import get_songs_col
-from models import doc_to_dict
+from models import doc_to_dict, sanitize_filename
 
 router = APIRouter(prefix="/songs", tags=["songs"])
 
 
-def _audio_response(path: Path, media_type: str, request: Request):
+def _audio_response(path: Path, media_type: str, request: Request, download_name: str | None = None):
     """Return a range-aware audio response so browsers can seek."""
     file_size = path.stat().st_size
     range_header = request.headers.get("Range")
+
+    disposition = f'inline; filename="{download_name or path.name}"'
 
     if range_header:
         m = re.match(r"bytes=(\d+)-(\d*)", range_header)
@@ -45,13 +47,14 @@ def _audio_response(path: Path, media_type: str, request: Request):
             "Content-Range": f"bytes {start}-{end}/{file_size}",
             "Accept-Ranges": "bytes",
             "Content-Length": str(length),
+            "Content-Disposition": disposition,
         }
         return StreamingResponse(_iter(), status_code=206, headers=headers, media_type=media_type)
 
     return FileResponse(
         str(path),
         media_type=media_type,
-        headers={"Accept-Ranges": "bytes"},
+        headers={"Accept-Ranges": "bytes", "Content-Disposition": disposition},
     )
 
 SONGS_DIR = Path(os.environ.get("SONGS_DIR", "../songs"))
@@ -176,7 +179,9 @@ async def stream_original(song_id: str, request: Request):
     path = SONGS_DIR / doc["original_filename"]
     if not path.exists():
         raise HTTPException(status_code=404, detail="Audio file missing")
-    return _audio_response(path, "audio/mpeg", request)
+    ext = path.suffix
+    download_name = f"{sanitize_filename(doc['title'])}_Original{ext}"
+    return _audio_response(path, "audio/mpeg", request, download_name)
 
 
 @router.get("/{song_id}/stream/instrumental")
@@ -190,7 +195,8 @@ async def stream_instrumental(song_id: str, request: Request):
     path = SONGS_DIR / doc["instrumental_filename"]
     if not path.exists():
         raise HTTPException(status_code=404, detail="Instrumental file missing")
-    return _audio_response(path, "audio/wav", request)
+    download_name = f"{sanitize_filename(doc['title'])}_Instrumental{path.suffix}"
+    return _audio_response(path, "audio/wav", request, download_name)
 
 
 @router.get("/{song_id}/stream/vocals")
@@ -204,7 +210,8 @@ async def stream_vocals(song_id: str, request: Request):
     path = SONGS_DIR / doc["vocals_filename"]
     if not path.exists():
         raise HTTPException(status_code=404, detail="Vocals file missing")
-    return _audio_response(path, "audio/wav", request)
+    download_name = f"{sanitize_filename(doc['title'])}_Vocals{path.suffix}"
+    return _audio_response(path, "audio/wav", request, download_name)
 
 
 # ── background task ───────────────────────────────────────────────────────────

@@ -37,6 +37,15 @@ async def run_pipeline(song_id: str):
 
         input_path = SONGS_DIR / doc["original_filename"]
 
+        # Derive base name for demucs output files from the stored filename.
+        # New uploads follow "{Sanitized_Title}_Original.ext"; strip the suffix.
+        original_stem = Path(doc["original_filename"]).stem
+        title_base = (
+            original_stem[: -len("_Original")]
+            if original_stem.endswith("_Original")
+            else original_stem
+        )
+
         # ── Step 1: Demucs ────────────────────────────────────────────────────
         await _update(
             song_id,
@@ -46,7 +55,7 @@ async def run_pipeline(song_id: str):
         )
 
         instrumental_path, vocals_path = await asyncio.to_thread(
-            demucs_service.separate, input_path, SONGS_DIR
+            demucs_service.separate, input_path, SONGS_DIR, title_base
         )
 
         await _update(

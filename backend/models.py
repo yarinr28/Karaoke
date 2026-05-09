@@ -1,8 +1,20 @@
+import re
 import uuid
 import json
 from datetime import datetime, timezone
 from pydantic import BaseModel
 from typing import Optional, List
+
+
+def sanitize_filename(title: str) -> str:
+    """Convert a song title to a safe, readable filename component.
+    'Learn to Fly' → 'Learn_to_Fly'
+    """
+    s = title.strip().replace(" ", "_")
+    s = re.sub(r"[^\w\-]", "", s)   # keep alphanumeric, underscore, hyphen
+    s = re.sub(r"_+", "_", s)       # collapse multiple underscores
+    s = s.strip("_")
+    return s or "Unknown"
 
 
 def new_song_doc(
