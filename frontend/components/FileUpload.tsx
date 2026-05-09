@@ -59,16 +59,10 @@ export default function FileUpload({ onUploaded }: Props) {
           </>
         ) : (
           <>
-            <div
-              className="text-3xl mb-1 opacity-40 cursor-pointer"
-              onClick={() => inputRef.current?.click()}
-            >
+            <div className="text-3xl mb-1 opacity-40">
               📂
             </div>
-            <p
-              className="text-xs text-text-dim cursor-pointer"
-              onClick={() => inputRef.current?.click()}
-            >
+            <p className="text-xs text-text-dim">
               Drop MP3 or <span className="text-accent-bright">browse</span>
             </p>
             <p className="text-[10px] text-text-dim/50 mt-0.5">Auto-processes with AI</p>
