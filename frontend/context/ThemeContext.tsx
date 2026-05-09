@@ -39,6 +39,19 @@ function applyTheme(mode: Mode, accent: AccentColor) {
   root.setAttribute('data-mode', mode);
   root.style.setProperty('--accent', accent.hex);
   root.style.setProperty('--accent-rgb', accent.rgb);
+
+  const dark = mode === 'dark';
+  root.style.setProperty('--color-bg',       dark ? '#030308'                  : '#f2f0ff');
+  root.style.setProperty('--color-sidebar',   dark ? 'rgba(5,5,12,0.96)'       : 'rgba(238,235,255,0.98)');
+  root.style.setProperty('--color-footer',    dark ? 'rgba(3,3,8,0.88)'        : 'rgba(238,235,255,0.94)');
+  root.style.setProperty('--color-border',    dark ? 'rgba(255,255,255,0.07)'  : 'rgba(0,0,0,0.1)');
+  root.style.setProperty('--color-surface',   dark ? 'rgba(255,255,255,0.04)'  : 'rgba(0,0,0,0.05)');
+  root.style.setProperty('--color-text',      dark ? '#ffffff'                 : '#0d0d1a');
+  root.style.setProperty('--color-text-rgb',  dark ? '255, 255, 255'           : '13, 13, 26');
+  root.style.setProperty('--color-text-dim',  dark ? 'rgba(255,255,255,0.4)'   : 'rgba(13,13,26,0.45)');
+  root.style.setProperty('--modal-bg',        dark ? 'rgba(10,8,20,0.92)'      : 'rgba(245,243,255,0.97)');
+  root.style.setProperty('--player-bg1',      `rgba(${accent.rgb},${dark ? '0.22' : '0.12'})`);
+  root.style.setProperty('--player-bg2',      `rgba(${accent.rgb},${dark ? '0.08' : '0.04'})`);
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
