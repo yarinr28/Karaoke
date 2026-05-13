@@ -10,6 +10,7 @@ interface Props {
   onSelect: (song: Song) => void;
   onAddToQueue?: (song: Song) => void;
   onListChange?: (songs: Song[]) => void;
+  uploadedSong?: Song | null;
 }
 
 function fmt(s: number) {
@@ -17,7 +18,7 @@ function fmt(s: number) {
   return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 }
 
-export default function SongList({ activeSongId, onSelect, onAddToQueue, onListChange }: Props) {
+export default function SongList({ activeSongId, onSelect, onAddToQueue, onListChange, uploadedSong }: Props) {
   const [songs, setSongs] = useState<Song[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -31,6 +32,11 @@ export default function SongList({ activeSongId, onSelect, onAddToQueue, onListC
   }, [onListChange]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!uploadedSong) return;
+    setSongs((prev) => [uploadedSong, ...prev.filter((s) => s.id !== uploadedSong.id)]);
+  }, [uploadedSong]);
 
   const handleReady = useCallback((updated: Song) => {
     setSongs((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));

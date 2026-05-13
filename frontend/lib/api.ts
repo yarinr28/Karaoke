@@ -103,6 +103,12 @@ export async function uploadManual(
   });
 }
 
+export async function retrySong(id: string): Promise<Song> {
+  const res = await fetch(`${BASE}/songs/${id}/retry`, { method: 'POST' });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 export async function deleteSong(id: string): Promise<void> {
   await fetch(`${BASE}/songs/${id}`, { method: 'DELETE' });
 }

@@ -192,6 +192,30 @@ async def update_song(
     return doc_to_dict(updated)
 
 
+@router.post("/{song_id}/retry")
+async def retry_song(song_id: str, background_tasks: BackgroundTasks):
+    """Reset processing state and re-run the full pipeline from the beginning."""
+    col = get_songs_col()
+    doc = await col.find_one({"_id": song_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Song not found")
+    if not doc.get("original_filename"):
+        raise HTTPException(status_code=400, detail="No original file found")
+
+    await col.update_one({"_id": song_id}, {"$set": {
+        "processing_state": "queued",
+        "processing_step": "Queued…",
+        "processing_progress": 0,
+        "processing_error": None,
+    }})
+
+    from routers.process import run_pipeline
+    background_tasks.add_task(run_pipeline, song_id)
+
+    updated = await col.find_one({"_id": song_id})
+    return doc_to_dict(updated)
+
+
 @router.delete("/{song_id}")
 async def delete_song(song_id: str):
     col = get_songs_col()

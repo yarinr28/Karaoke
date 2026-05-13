@@ -13,8 +13,8 @@
 #   so it just works — no extra config needed.
 #
 # TOGGLE OFFLINE MODE (disable AI, keep manual upload)
-#   Change OFFLINE_MODE=false → OFFLINE_MODE=true in the backend section below,
-#   then: docker compose up -d --build backend
+#   $env:OFFLINE_MODE="true"; docker compose up -d   (PowerShell, no rebuild needed)
+#   OFFLINE_MODE=true docker compose up -d            (bash)
 #   The UI will show an "Offline" badge on the AI tab and auto-switch to Manual.
 #
 # GPU ACCELERATION (optional — requires Nvidia Container Toolkit installed on host)
@@ -54,7 +54,7 @@ services:
       # ── AI toggle ──────────────────────────────────────────────────────────
       # "false" = full AI pipeline (Demucs + Whisper)  [default]
       # "true"  = AI disabled; only manual upload works; UI shows Offline badge
-      - OFFLINE_MODE=false
+      - OFFLINE_MODE=${OFFLINE_MODE:-false}
 
       # ── Database ────────────────────────────────────────────────────────────
       - MONGO_URL=mongodb://mongodb:27017

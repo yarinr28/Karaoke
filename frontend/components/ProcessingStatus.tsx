@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { Song } from '@/types';
-import { fetchSong } from '@/lib/api';
+import { fetchSong, retrySong } from '@/lib/api';
 
 interface Props {
   song: Song;
@@ -20,6 +20,7 @@ const STATE_ICON: Record<string, string> = {
 
 export default function ProcessingStatus({ song, onReady }: Props) {
   const [current, setCurrent] = useState(song);
+  const [retrying, setRetrying] = useState(false);
 
   const poll = useCallback(async () => {
     try {
@@ -39,7 +40,21 @@ export default function ProcessingStatus({ song, onReady }: Props) {
     return () => clearInterval(id);
   }, [current.processing_state, poll]);
 
+  const handleRetry = useCallback(async () => {
+    setRetrying(true);
+    try {
+      const updated = await retrySong(song.id);
+      setCurrent(updated);
+    } catch {
+      // ignore — next poll will reflect actual state
+    } finally {
+      setRetrying(false);
+    }
+  }, [song.id]);
+
   if (current.processing_state === 'done') return null;
+
+  const isError = current.processing_state === 'error';
 
   return (
     <div className="px-4 py-3 bg-surface border border-border rounded-xl">
@@ -51,12 +66,21 @@ export default function ProcessingStatus({ song, onReady }: Props) {
           <p className="text-sm font-medium text-white truncate">{current.title}</p>
           <p className="text-xs text-text-dim">{current.processing_step}</p>
         </div>
-        <span className="text-xs text-accent-bright font-mono shrink-0">
-          {current.processing_progress}%
-        </span>
+        {!isError && (
+          <span className="text-xs text-accent-bright font-mono shrink-0">
+            {current.processing_progress}%
+          </span>
+        )}
+        <button
+          onClick={handleRetry}
+          disabled={retrying}
+          className="shrink-0 text-xs px-2 py-1 rounded-lg border border-border text-text-dim hover:text-white hover:border-accent-bright transition-colors disabled:opacity-40"
+        >
+          {retrying ? '…' : 'Retry'}
+        </button>
       </div>
 
-      {current.processing_state !== 'error' && (
+      {!isError && (
         <div className="h-1 bg-border rounded-full overflow-hidden">
           <div
             className="h-full bg-accent-bright transition-all duration-500"
@@ -65,7 +89,7 @@ export default function ProcessingStatus({ song, onReady }: Props) {
         </div>
       )}
 
-      {current.processing_state === 'error' && (
+      {isError && (
         <p className="text-xs text-red-400 mt-1">{current.processing_error}</p>
       )}
     </div>

@@ -56,7 +56,7 @@ export default function EditSongModal({ song, onClose, onSaved }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
       onClick={onClose}
     >
       <div
@@ -64,7 +64,6 @@ export default function EditSongModal({ song, onClose, onSaved }: Props) {
         style={{
           background: 'var(--modal-bg)',
           border: '1px solid var(--color-border)',
-          backdropFilter: 'blur(40px)',
         }}
         onClick={(e) => e.stopPropagation()}
       >

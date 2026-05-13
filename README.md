@@ -1,3 +1,13 @@
+להרים:
+docker compose --env-file .env.offline up -d
+docker compose --env-file .env.online up -d
+
+בילד דורש רשת:
+docker compose up -d --build
+
+בילד לקוד ברשת סגורה:
+docker compose up -d --build backend
+docker compose up -d --build frontend
 # Karaoke — Fully Automated AI Karaoke System
 
 Upload any MP3. The system automatically:

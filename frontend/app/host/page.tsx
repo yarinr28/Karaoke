@@ -12,6 +12,7 @@ import { fetchSong } from '@/lib/api';
 export default function HostPage() {
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [allSongs, setAllSongs] = useState<Song[]>([]);
+  const [lastUploaded, setLastUploaded] = useState<Song | null>(null);
   const [showCode, setShowCode] = useState(false);
   const [showTheme, setShowTheme] = useState(false);
   const ws = useQueueSocket();
@@ -46,6 +47,7 @@ export default function HostPage() {
   }, [ws]);
 
   const handleUploaded = useCallback((song: Song) => {
+    setLastUploaded(song);
     setAllSongs((prev) => [song, ...prev.filter((s) => s.id !== song.id)]);
   }, []);
 
@@ -65,6 +67,7 @@ export default function HostPage() {
           onSelect={handleSelect}
           onAddToQueue={handleAddToQueue}
           onListChange={setAllSongs}
+          uploadedSong={lastUploaded}
         />
         <FileUpload onUploaded={handleUploaded} />
       </aside>
