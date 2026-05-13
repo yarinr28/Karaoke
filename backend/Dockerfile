@@ -36,6 +36,20 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements.txt
 
+# Step 4 — Pre-download model weights at build time so the container works
+# without internet access at runtime.
+
+# Demucs htdemucs (~83 MB, cached to /root/.cache/torch/hub/checkpoints/)
+RUN python -c "from demucs.pretrained import get_model; get_model('htdemucs')"
+
+# faster-whisper model files (downloaded via huggingface_hub, no GPU memory needed)
+# ARG makes WHISPER_MODEL available as an env var in the RUN step below.
+ARG WHISPER_MODEL=large-v3
+RUN python -c "\
+import os; \
+from huggingface_hub import snapshot_download; \
+snapshot_download('Systran/faster-whisper-' + os.environ.get('WHISPER_MODEL', 'large-v3'))"
+
 COPY . .
 
 ENV PYTHONDONTWRITEBYTECODE=1

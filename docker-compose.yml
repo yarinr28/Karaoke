@@ -46,6 +46,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        # Must match WHISPER_MODEL env var below so the right model is baked in.
+        - WHISPER_MODEL=large-v3
     restart: unless-stopped
     environment:
       # ── AI toggle ──────────────────────────────────────────────────────────

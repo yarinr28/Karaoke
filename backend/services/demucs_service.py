@@ -1,9 +1,10 @@
 """
 Vocal separation using the Demucs Python API (not the CLI subprocess).
 
-Audio loading uses torchaudio.load() — works cleanly on torchaudio==2.5.1
-which bundles soundfile/libsndfile and handles MP3, WAV, FLAC, OGG natively.
-Audio saving uses the Python stdlib wave module (no extra DLL dependency).
+Non-WAV inputs (MP3, FLAC, OGG, …) are decoded to a temporary WAV via system
+ffmpeg before torchaudio loads them — the CPU-only torchaudio wheels rely on
+libsndfile which does not support MP3 natively.
+Audio saving uses the Python stdlib wave module.
 """
 
 from pathlib import Path
@@ -33,14 +34,33 @@ def separate(input_path: Path, output_dir: Path, title_base: str | None = None) 
 
 def _load_audio(path: Path):
     """
-    Load any audio file (MP3, WAV, FLAC, OGG) using torchaudio 2.5.1.
-    Returns (tensor, sample_rate) where tensor shape is (1, 2, samples).
+    Load any audio file (MP3, WAV, FLAC, OGG) and return (tensor, sample_rate)
+    where tensor shape is (1, 2, samples).
+
+    torchaudio's CPU-only wheels use libsndfile which does not support MP3.
+    Non-WAV files are first converted to a temporary WAV via system ffmpeg.
     """
     import torchaudio
+    import subprocess
+    import tempfile
+    import os
 
     TARGET_SR = 44100
 
-    audio, sr = torchaudio.load(str(path))  # (channels, samples) float32
+    if path.suffix.lower() != ".wav":
+        tmp_fd, tmp_wav = tempfile.mkstemp(suffix=".wav")
+        os.close(tmp_fd)
+        try:
+            subprocess.run(
+                ["ffmpeg", "-y", "-i", str(path), tmp_wav],
+                check=True,
+                capture_output=True,
+            )
+            audio, sr = torchaudio.load(tmp_wav)
+        finally:
+            os.unlink(tmp_wav)
+    else:
+        audio, sr = torchaudio.load(str(path))
 
     if audio.shape[0] == 1:
         audio = audio.repeat(2, 1)
