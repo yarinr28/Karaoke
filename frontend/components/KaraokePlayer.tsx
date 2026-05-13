@@ -38,7 +38,13 @@ export default function KaraokePlayer({ song, onEnded }: Props) {
   const audio = useKaraokeAudio(song);
   const { state, analyser, instRef, vocalsRef, seek, setSpeed, togglePlay, toggleKaraokeMode, setVolume, loadSong, onInstrumentalLoaded, onEnded: handleEnded } = audio;
 
-  const [vol, setVol] = useState(1);
+  const [vol, setVol] = useState(() => {
+    if (typeof window === 'undefined') return 1;
+    return parseFloat(localStorage.getItem('karaoke:volume') ?? '1');
+  });
+
+  useEffect(() => { localStorage.setItem('karaoke:volume', String(vol)); }, [vol]);
+  useEffect(() => { setVolume(vol); }, []); // apply saved volume on mount
   const seekPct = state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0;
   const volPct  = vol * 100;
 

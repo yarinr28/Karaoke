@@ -38,12 +38,20 @@ export function useQueueSocket() {
     ws.onmessage = (event) => {
       const msg: WsMessage = JSON.parse(event.data);
       if (msg.type === 'session:created') {
-        setSessionCode(msg.payload.code as string);
+        const code = msg.payload.code as string;
+        localStorage.setItem('karaoke:session', code);
+        setSessionCode(code);
       } else if (msg.type === 'session:joined') {
-        setSessionCode(msg.payload.code as string);
+        const code = msg.payload.code as string;
+        localStorage.setItem('karaoke:session', code);
+        setSessionCode(code);
         setSession(msg.payload.session as SessionState);
       } else if (msg.type === 'queue:updated') {
         setSession(msg.payload.session as SessionState);
+      } else if (msg.type === 'error') {
+        // Saved session no longer exists — clear it and create a fresh one
+        localStorage.removeItem('karaoke:session');
+        send({ type: 'session:create', payload: {} });
       }
     };
 

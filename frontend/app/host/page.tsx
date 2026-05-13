@@ -18,8 +18,14 @@ export default function HostPage() {
   const ws = useQueueSocket();
 
   useEffect(() => {
-    if (ws.connected && !ws.sessionCode) ws.createSession();
-  }, [ws.connected, ws.sessionCode, ws.createSession]);
+    if (!ws.connected || ws.sessionCode) return;
+    const saved = localStorage.getItem('karaoke:session');
+    if (saved) {
+      ws.joinSession(saved);
+    } else {
+      ws.createSession();
+    }
+  }, [ws.connected, ws.sessionCode, ws.createSession, ws.joinSession]);
 
   const handleSelect = useCallback((song: Song) => setCurrentSong(song), []);
 
